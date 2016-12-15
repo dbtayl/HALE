@@ -39,10 +39,10 @@ int32_t calculatePlayerValue(GameState_t* gs, uint8_t playerNum)
 	}
 	
 	Player_t* p = &(gs->players[playerNum]);
-    int32_t val = p->cash;
-    
-    PRINT_MSG("FIXME: Need to finish calculating the player's value");
-    HANDLE_UNRECOVERABLE_ERROR(HALE_FUNC_NOT_IMPLEMENTED);
+	int32_t val = p->cash;
+	
+	PRINT_MSG("FIXME: Need to finish calculating the player's value");
+	HANDLE_UNRECOVERABLE_ERROR(HALE_FUNC_NOT_IMPLEMENTED);
 
 	return val;
 }

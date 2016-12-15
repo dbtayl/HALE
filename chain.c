@@ -12,14 +12,14 @@ HALE_status_t getChainPricesPerShare(GameState_t* gs, int32_t* prices, uint8_t* 
 	CHECK_NULL_PTR(gs, "gs");
 	CHECK_NULL_PTR(prices, "prices");
 	
-    
-    uint8_t sizes[NUM_CHAINS];
-    getChainSize(gs, sizes);
-    
-    //Cycle through the chains and calculate prices
-    int i;
-    for(i = 0; i < NUM_CHAINS; i++)
-    {
+	
+	uint8_t sizes[NUM_CHAINS];
+	getChainSize(gs, sizes);
+	
+	//Cycle through the chains and calculate prices
+	int i;
+	for(i = 0; i < NUM_CHAINS; i++)
+	{
 		if(sizes[i] < 6)
 		{
 			prices[i] = sizes[i]*100;
