@@ -44,7 +44,7 @@ void initializeGameState(GameState_t* gs)
 		gs->players[i].cash = STARTING_CASH;
 		
 		memset(gs->players[i].stocks, 0, sizeof(gs->players[i].stocks[0]) * NUM_CHAINS);
-	   
+		
 		int j;
 		for(j = 0; j < HAND_SIZE; j++)
 		{

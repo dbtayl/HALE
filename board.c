@@ -241,21 +241,21 @@ uint8_t wouldCauseMerger(GameState_t* gs, uint8_t tile, uint8_t* numMergingChain
 		if(adj[i] < CHAIN_NONE)
 		{
 			int j;
-		   uint8_t dup = 0;
-		   for(j = 0; j < *numMergingChains; j++)
-		   {
-			if(adj[i] == mergingChains[j])
-			   {
+			uint8_t dup = 0;
+			for(j = 0; j < *numMergingChains; j++)
+			{
+				if(adj[i] == mergingChains[j])
+				{
 					dup = 1;
-			   }
-		   }
+				}
+			}
 			
-		   //...if not, record it
-		   if(!dup)
-		   {
-			   mergingChains[*numMergingChains] = adj[i];
-			   *numMergingChains = (*numMergingChains) + 1;
-		   }
+			//...if not, record it
+			if(!dup)
+			{
+				mergingChains[*numMergingChains] = adj[i];
+				*numMergingChains = (*numMergingChains) + 1;
+			}
 		} //if(adj[u[ < CHAIN_NONE)
 	}//for(i = 0; i < 4; i++)
 	
