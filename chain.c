@@ -1,3 +1,6 @@
+#include <string.h>
+
+#include "board.h"
 #include "chain.h"
 #include "util.h"
 
@@ -14,7 +17,7 @@ HALE_status_t getChainPricesPerShare(GameState_t* gs, int32_t* prices, uint8_t* 
 	
 	
 	uint8_t sizes[NUM_CHAINS];
-	getChainSize(gs, sizes);
+	getChainSizes(gs, sizes);
 	
 	//Cycle through the chains and calculate prices
 	int i;
@@ -36,12 +39,12 @@ HALE_status_t getChainPricesPerShare(GameState_t* gs, int32_t* prices, uint8_t* 
 		
 		//Add "bonus cost" for more expensive chains
 		//+$100 for mid-tier
-		if(chain > CHAIN_TOWER)
+		if(i > CHAIN_TOWER)
 		{
 			prices[i] += 100;
 		}
 		//ANOTHER +$100 for top-tier
-		if(chain > CHAIN_FESTIVAL)
+		if(i > CHAIN_FESTIVAL)
 		{
 			prices[i] += 100;
 		}

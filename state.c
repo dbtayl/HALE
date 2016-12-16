@@ -169,7 +169,7 @@ void runGame(uint8_t numPlayers)
 	//Keep the game state internal to the function; don't want to let
 	//anything else screw with it (except for all the stuff we pass it to)
 	GameState_t gs;
-	HALE_status_t err_code = HALE_OK;
+	//HALE_status_t err_code = HALE_OK;
 	
 	//Zero out the board
 	initializeGameState(&gs);

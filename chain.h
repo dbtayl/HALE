@@ -1,7 +1,14 @@
 #ifndef HALE_CHAIN_H
 #define HALE_CHAIN_H
 
+#include <stdint.h>
+
+#include "config.h"
+
+typedef struct GameState_s GameState_t;
+
 #define NUM_CHAINS (7)
+#define SAFE_CHAIN_SIZE (11)
 
 //None indicates a tile is in place, but not part of a chain
 //empty indicates no tile is in place

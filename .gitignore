@@ -37,3 +37,6 @@
 
 #binary
 HALE
+
+#backup files
+*~

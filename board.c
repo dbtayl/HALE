@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "config.h"
 #include "board.h"
@@ -125,80 +126,94 @@ HALE_status_t dealTile(GameState_t* gs, uint8_t playerNum)
 }
 
 
-uint8_t isValidTilePlay(GameState_t* gs, uint8_t tile)
+//Populates <adjacentSquares> with the values of the squares up, left, right,
+//and down from the tile <tile>.
+void getAdjacentSquares(GameState_t* gs, uint8_t tile, chain_t* adjacentSquares)
 {
 	CHECK_NULL_PTR(gs, "gs");
+	CHECK_NULL_PTR(adjacentSquares, "adjacentSquares");
 	
-	
-	
-	//FIXME: Replace this with various calls to "wouldCauseMerger" and
-	//"wouldCreateChain"
-	
-	
-	
-	
-	//Invalid if:
-	//-would merge two safe chains
-	//-would create a chain when there are already 7 in play
-	
-	//First, find out what tiles types are adjacent
-	//Get indices of board adjacent to tile: Up, left, right, down
-	int i;
-	uint8_t indices[4] = {SQUARE_LEFT(tile), SQUARE_RIGHT(tile), SQUARE_UP(tile), SQUARE_DOWN(tile)};
-	chain_t uniqueChains[4] = {CHAIN_EMPTY};
-	int numUniq = 0;
+	uint8_t indices[4] = {SQUARE_UP(tile), SQUARE_LEFT(tile), SQUARE_RIGHT(tile), SQUARE_DOWN(tile)};
 	
 	//Resolve to state of each square and count up how many uniqe tile types
-	//immediately surround the proposed placement
-	chain_t adj[4];
+	int i;
 	for(i = 0; i < 4; i++)
 	{
 		uint8_t idx = indices[i];
-		adj[i] = (idx == BOARD_NULL) ? CHAIN_EMPTY : gs->board[idx];
-		
-		//Check if the square we just looked at is unique (so far)
-		int j;
-		uint8_t uniq = 1;
-		for(j = 0; j < i; j++)
+		adjacentSquares[i] = (idx == BOARD_NULL) ? CHAIN_EMPTY : gs->board[idx];
+	}
+}
+
+
+uint8_t isValidTilePlay(GameState_t* gs, uint8_t tile)
+{
+	//Invalid if:
+	//-would merge two safe chains
+	//-would create a chain when there are already 7 in play
+	CHECK_NULL_PTR(gs, "gs");
+	
+	chain_t mergingChains[4];
+	uint8_t numMergingChains;
+	uint8_t merge = wouldCauseMerger(gs, tile, &numMergingChains, mergingChains);
+	uint8_t create = wouldCreateChain(gs, tile);
+	
+	//If it doesn't cause a merger or create a chain, it must be OK
+	if(!merge && !create)
+	{
+		return 1;
+	}
+	
+	//Otherwise, we need to know how big the chains are
+	uint8_t sizes[NUM_CHAINS];
+	getChainSizes(gs, sizes);
+	
+	//If this would cause a merger, make sure the merger is legal
+	if(merge)
+	{
+		//Can only be illegal if trying to merge two or more safe chains
+		uint8_t safeCount = 0;
+		int i;
+		for(i = 0; i < numMergingChains; i++)
 		{
-			if(adj[i] == adj[j])
+			if(sizes[mergingChains[i]] >= SAFE_CHAIN_SIZE)
 			{
-				uniq = 0;
+				safeCount++;
 			}
 		}
 		
-		//If it was unique- and not empty-, add to the list
-		if(uniq && adj[i] != CHAIN_EMPTY)
+		//If two or more are safe, it's an illegal move
+		if(safeCount > 1)
 		{
-			uniqueChains[numUniq] = adj[i];
-			numUniq++;
+			return 0;
 		}
 	}
 	
-	//Trivial case- all empty squares. Valid!
-	if(numUniq == 0)
+	//If this would create a chain, make sure creating a chain is legal
+	if(create)
 	{
-		return (uint8_t)1;
+		uint8_t legal = 0;
+		
+		//Check if any chain is of size 0
+		int i;
+		for(i = 0; i < NUM_CHAINS; i++)
+		{
+			if(sizes[i] == 0)
+			{
+				legal = 1;
+				break;
+			}
+		}
+		
+		//if not, return invalid move
+		if(!legal)
+		{
+			return 0;
+		}
 	}
 	
-	//Fairly trivial case: just one thing around
-	if(numUniq == 1)
-	{
-		//If this would create a new chain, need to check if that's OK
-		if(uniqueChains[0] == CHAIN_NONE)
-		{
-			PRINT_MSG("FIXME: Implement checking if it's valid to form a new chain");
-		}
-		//If this would just expand a single chain, no problem
-		else
-		{
-			return 1;
-		}
-	}
 	
-	PRINT_MSG("FIXME: Need to finish isValidTilePlay()");
-	
-	return 0;
+	//If it's not illegal, it must be legal
+	return 1;
 }
 
 
@@ -207,11 +222,46 @@ uint8_t wouldCauseMerger(GameState_t* gs, uint8_t tile, uint8_t* numMergingChain
 	//NOTE: Don't bother checking if the tile has already been played-
 	//the return value should be valid regardless
 	CHECK_NULL_PTR(gs, "gs");
+	CHECK_NULL_PTR(numMergingChains, "numMergingChains");
+	CHECK_NULL_PTR(mergingChains, "mergingChains");
 	
-	PRINT_MSG("FIXME: Implement wouldCauseMerger()");
-	HANDLE_UNRECOVERABLE_ERROR(HALE_FUNC_NOT_IMPLEMENTED);
+	//Step 0: Zero out the count of merging chains
+	*numMergingChains = 0;
 	
-	return 0;
+	//Step 1: Check what the squares around the proposed play location
+	//contain
+	chain_t adj[4];
+	getAdjacentSquares(gs, tile, adj);
+	
+	//Step 2: see if there's more than one chain contained in that set
+	int i;
+	for(i = 0; i < 4; i++)
+	{
+		//for each chain, check if it matches one of the already-recorded chains...
+		if(adj[i] < CHAIN_NONE)
+		{
+			int j;
+		   uint8_t dup = 0;
+		   for(j = 0; j < *numMergingChains; j++)
+		   {
+			if(adj[i] == mergingChains[j])
+			   {
+					dup = 1;
+			   }
+		   }
+			
+		   //...if not, record it
+		   if(!dup)
+		   {
+			   mergingChains[*numMergingChains] = adj[i];
+			   *numMergingChains = (*numMergingChains) + 1;
+		   }
+		} //if(adj[u[ < CHAIN_NONE)
+	}//for(i = 0; i < 4; i++)
+	
+	
+	//Step 3: Return 1 if more than one chain is immediately-adjacent
+	return (*numMergingChains > 0) ? 1 : 0;
 }
 
 
@@ -270,7 +320,7 @@ HALE_status_t getChainSizes(GameState_t* gs, uint8_t* sizes)
 	int i;
 	for(i = 0; i < BOARD_TILES; i++)
 	{
-		chain_t c = gs->board[i]
+		chain_t c = gs->board[i];
 		if(c < CHAIN_NONE)
 		{
 			sizes[c]++;
