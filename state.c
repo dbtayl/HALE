@@ -199,6 +199,9 @@ void runGame(uint8_t numPlayers)
 		PRINT_MSG("FIXME: Need to run actual game!");
 		
 		PRINT_MSG("FIXME: Play a tile");
+		PRINT_MSG("FIXME: Need to handle a player having no playable tiles- should be handled here-ish");
+		PRINT_MSG("FIXME: Need to look up how permanently-unplayable tiles work- should be handled here-ish");
+		
 		PRINT_MSG("FIXME: Handle any new chains/mergers");
 		PRINT_MSG("FIXME: Allow buying of shares");
 		PRINT_MSG("FIXME: Allow option to end game, if applicable");

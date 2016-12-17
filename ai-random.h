@@ -5,6 +5,11 @@
 
 #include "state.h"
 
+/*
+ * This AI is random- every move is randomized from the set of valid options,
+ * with no strategy whatsoever.
+ */
+
 
 //See player.h for an explanation of these functions
 

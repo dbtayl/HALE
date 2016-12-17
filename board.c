@@ -152,6 +152,14 @@ uint8_t isValidTilePlay(GameState_t* gs, uint8_t tile)
 	//-would create a chain when there are already 7 in play
 	CHECK_NULL_PTR(gs, "gs");
 	
+	//Firstly, if the TILE isn't valid, it can't be a valid play
+	//These are arguably redundant checks, but it seems like a good
+	//practice to have both of them in there
+	if( (tile >= BOARD_TILES) || (tile == TILE_NULL) )
+	{
+	    return 0;
+	}
+	
 	chain_t mergingChains[4];
 	uint8_t numMergingChains;
 	uint8_t merge = wouldCauseMerger(gs, tile, &numMergingChains, mergingChains);
