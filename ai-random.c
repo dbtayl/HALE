@@ -87,7 +87,90 @@ chain_t randomMergerSurvivor(GameState_t* gs, uint8_t playerNum, uint8_t numOpti
 
 void randomBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy)
 {
-	HANDLE_UNRECOVERABLE_ERROR(HALE_FUNC_NOT_IMPLEMENTED);
+	//Figure out which stocks you CAN buy
+	int numCanBuy[NUM_CHAINS] = {0};
+	
+	//And how many different chains can be bought
+	int numOptions = 0;
+	
+	chain_t options[NUM_CHAINS];
+	
+	//This will contain the prices for ALL of the chains- so it can
+	//be indexed by a chain_t
+	int32_t prices[NUM_CHAINS];
+	
+	//shortcut instead of having to type out the whole thing
+	//Also subtract from this as we "buy" stocks to keep track of whether
+	//we can buy others
+	int32_t cash = gs->players[playerNum].cash;
+	
+	getChainPricesPerShare(gs, prices, NULL);
+	
+	int i;
+	for(i = 0; i < NUM_CHAINS; i++)
+	{
+		//Might as well zero out the toBuy array for good measure
+		toBuy[i] = 0;
+		
+		//If the chain exists and has stock left, see if we could buy any
+		if( (prices[i] > 0) && (gs->remainingStocks[i] > 0) )
+		{
+			//How many you could buy could be limited by number
+			//left on the market, how many shares you can buy
+			//per turn, or how much cash is on hand
+			int32_t couldBuy = cash / prices[i];
+			numCanBuy[i] = (couldBuy > SHARES_PER_TURN) ? SHARES_PER_TURN : couldBuy;
+			if(numCanBuy[i] > gs->remainingStocks[i])
+			{
+				numCanBuy[i] = gs->remainingStocks[i];
+			}
+			options[numOptions] = i;
+			numOptions++;
+		}
+	}
+	
+	//Now we know how many of each chain we COULD buy, at most.
+	//Next, choose how many we WANT to buy (0-3, technically at most
+	//SHARES_PER_TURN)
+	int numWantToBuy = rand() % (SHARES_PER_TURN + 1);
+	
+	//For each share we want to buy, pick a random chain and try to
+	//buy it- if we can no longer afford it, look through the rest of
+	//the chains and try to buy one of those instead.
+	for(i = 0; i < numWantToBuy; i++)
+	{
+		uint8_t tryToBuy = rand() % numOptions;
+		
+		//if we can still afford the option, and there are any
+		//left, request to buy it
+		if( (prices[options[tryToBuy]] < cash) && (numCanBuy[options[tryToBuy]] > 0) )
+		{
+			toBuy[options[tryToBuy]]++;
+			cash -= prices[tryToBuy];
+			numCanBuy[options[tryToBuy]]--;
+			
+		}
+		//Otherwise, see if any of the others work
+		else
+		{
+			int j;
+			for(j = (tryToBuy + 1) % numOptions; j != tryToBuy; j = (j + 1) % numOptions)
+			{
+				if( (prices[options[j]] < cash) && (numCanBuy[options[j]] > 0) )
+				{
+					toBuy[options[j]]++;
+					cash -= prices[options[j]];
+					numCanBuy[options[j]]--;
+					break;
+				}
+			}
+		}
+		
+		//We could probably add something in here to check if we
+		//ran out of money or stocks that we can buy, but there's
+		//only 3 iterations of this at most, so it's probably not
+		//worth it.
+	}
 }
 
 

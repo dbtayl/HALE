@@ -44,4 +44,8 @@ extern const char* err_msg[];
 #define TILE_NULL (0xff)
 
 
+//How many shares you can buy per turn
+#define SHARES_PER_TURN (3)
+
+
 #endif
