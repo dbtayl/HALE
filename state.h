@@ -8,13 +8,14 @@
 //Forward declaration of GameState_t
 typedef struct GameState_s GameState_t;
 
+//see player.h for an explanation of these functions
 typedef struct
 {
 	uint8_t (*playTile)(GameState_t* gs, uint8_t playerNum);
-	uint8_t (*formChain)(GameState_t* gs, uint8_t playerNum);
-	uint8_t (*mergerSurvivor)(GameState_t* gs, uint8_t playerNum, uint8_t numOptions, uint8_t* options);
+	chain_t (*formChain)(GameState_t* gs, uint8_t playerNum);
+	chain_t (*mergerSurvivor)(GameState_t* gs, uint8_t playerNum, uint8_t numOptions, chain_t* options);
 	void (*buyStock)(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy);
-	void (*mergerTrade)(GameState_t* gs, uint8_t playerNum, uint8_t survivor, uint8_t merged, uint8_t* tradeFor, uint8_t* sell);
+	void (*mergerTrade)(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t merged, uint8_t* tradeFor, uint8_t* sell);
 	uint8_t (*endGame)(GameState_t* gs, uint8_t playerNum);
 	char* name;
 } PlayerActions_t;

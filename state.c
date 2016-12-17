@@ -180,6 +180,7 @@ void runGame(uint8_t numPlayers)
 	for(i = 0; i < numPlayers; i++)
 	{
 		PRINT_MSG("FIXME: Need to populate player function structures");
+		PRINT_MSG("FIXME: Each player will be able to return a name string... verify/sanitize those once here- and record them locally so they can't change it later");
 	}
 	
 	//Deal initial tiles
