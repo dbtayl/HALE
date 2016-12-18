@@ -11,8 +11,7 @@ PlayerActions_t randomActions = {	.playTile = randomPlayTile,
 					.mergerSurvivor = randomMergerSurvivor,
 					.buyStock = randomBuyStock,
 					.mergerTrade = randomMergerTrade,
-					.endGame = randomEndGame,
-					.name = NULL
+					.endGame = randomEndGame
 				};
 
 

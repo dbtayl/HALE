@@ -3,7 +3,17 @@
 
 #include "util.h"
 
-const char* err_msg[HALE_NUM_STATUS] = {"OK", "FAIL", "TILE_POOL_EMPTY", "TILE_POOL_CORRUPTED", "PLAYER_HAND_FULL", "OOB", "BAD_INPUT", "FUNC_NOT_IMPLEMENTED", "AI_BADSTATE"};
+const char* err_msg[HALE_NUM_STATUS] =	{	"OK",
+						"FAIL",
+						"TILE_POOL_EMPTY",
+						"TILE_POOL_CORRUPTED",
+						"PLAYER_HAND_FULL",
+						"OOB",
+						"BAD_INPUT",
+						"FUNC_NOT_IMPLEMENTED",
+						"AI_BADSTATE",
+						"SHOULD_BE_IMPOSSIBLE"
+					};
 
 void handleUnrecoverableError(const char* func, HALE_status_t err_code)
 {

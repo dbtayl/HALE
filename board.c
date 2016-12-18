@@ -150,12 +150,15 @@ uint8_t isValidTilePlay(GameState_t* gs, uint8_t tile)
 	//Invalid if:
 	//-would merge two safe chains
 	//-would create a chain when there are already 7 in play
+	//-tile is already on the board
 	CHECK_NULL_PTR(gs, "gs");
 	
 	//Firstly, if the TILE isn't valid, it can't be a valid play
 	//These are arguably redundant checks, but it seems like a good
 	//practice to have both of them in there
-	if( (tile >= BOARD_TILES) || (tile == TILE_NULL) )
+	//The last check really shouldn't be necessary, but it's also technically
+	//an invalid more to play a tile that's already in play, so...
+	if( (tile >= BOARD_TILES) || (tile == TILE_NULL) || gs->board[tile] != CHAIN_EMPTY)
 	{
 	    return 0;
 	}

@@ -110,7 +110,7 @@ HALE_status_t placeInitialTiles(GameState_t* gs)
 }
 
 
-void makeSanitizedGameStateCopy(GameState_t* gs, GameState_t* newgs, uint8_t playerNum)
+void makeSanitizedGameStateCopy(GameState_t* newgs, GameState_t* gs, uint8_t playerNum)
 {
 	CHECK_NULL_PTR(gs, "gs");
 	CHECK_NULL_PTR(newgs, "newgs");
@@ -156,6 +156,99 @@ void makeSanitizedGameStateCopy(GameState_t* gs, GameState_t* newgs, uint8_t pla
 }
 
 
+//Handles getting a tile from the player, and validating that it's valid
+//for play
+//Returns the tile to be played
+uint8_t getTileToPlay(GameState_t* gs)
+{
+	CHECK_NULL_PTR(gs, "gs");
+	
+	//Check if gs->currentPlayer is in bounds
+#ifndef GO_FAST_AND_BREAK_THINGS
+	if(gs->currentPlayer >= gs->numPlayers)
+	{
+		PRINT_MSG_INT("gs->currentPlayer is invalid", gs->currentPlayer);
+		HANDLE_UNRECOVERABLE_ERROR(HALE_OOB);
+	}
+#endif //GO_FAST_AND_BREAK_THINGS
+
+	//Shorthand
+	uint8_t currentPlayer = gs->currentPlayer;
+
+	//Before doing anything involving talking to players, make a sanitized
+	//copy of the game state
+	GameState_t gsSanitized;
+	makeSanitizedGameStateCopy(&gsSanitized, gs, currentPlayer);
+
+	//First, request a tile to be played from the current player
+	uint8_t tile = gs->players[currentPlayer].actions.playTile(&gsSanitized, currentPlayer);
+	
+	//Validate that the tile is legal:
+	//-player had the tile in their hand
+	//-tile is a legal move on the board
+	uint8_t tileInHand = 0;
+	int i;
+	//Check if it's in their hand
+	for(i = 0; i < HAND_SIZE; i++)
+	{
+		if(gs->players[currentPlayer].tiles[i] == tile)
+		{
+			tileInHand = 1;
+		}
+	}
+	
+	//If it's not in their hand, OR it's an invalid tile to play... too bad
+	if(!isValidTilePlay(gs, tile) || !tileInHand)
+	{
+		PRINT_MSG_INT("Player tried to play invalid tile", tile);
+		PRINT_MSG_INT("Player", currentPlayer);
+		PRINT_MSG_ARG("Player name", gs->players[currentPlayer].name);
+		
+		
+		//If the tile wasn't valid, too bad- all well-behavied players/AI
+		//code should ensure that it is BEFORE sending it to the game. Pick
+		//a tile from their hand for them and play that.
+		for(i = 0; i < HAND_SIZE; i++)
+		{
+			tile = gs->players[currentPlayer].tiles[i];
+			if(isValidTilePlay(gs, tile))
+			{
+				break;
+			}
+		}
+		PRINT_MSG_INT("Playing a tile for them", tile);
+#ifndef GO_FAST_AND_BREAK_THINGS
+		if(!isValidTilePlay(gs, tile))
+		{
+			HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
+		}
+#endif //GO_FAST_AND_BREAK_THINGS
+	}
+	
+	//Find the tile in the player's hand and remove it
+	for(i = 0; i < HAND_SIZE; i++)
+	{
+		if(gs->players[currentPlayer].tiles[i] == tile)
+		{
+			gs->players[currentPlayer].tiles[i] = TILE_NULL;
+		}
+	} 
+	
+	//Should just return at this point?
+	//board.c should probably have a function for playing a tile, returning
+	//merger/new-chain status
+	//board.c should probably also have code for handling mergers (at least
+	//as far as the board is concerned) and making new chains (again, at
+	//least as far as the board is concerned)
+	
+	PRINT_MSG("FIXME: Need to place tile on board (maybe not- probably different step for that)");
+	
+	//Do NOT deal a new tile- that's a different step
+	
+	return tile;
+}
+
+
 void runGame(uint8_t numPlayers)
 {
 	int i;
@@ -198,9 +291,11 @@ void runGame(uint8_t numPlayers)
 	{
 		PRINT_MSG("FIXME: Need to run actual game!");
 		
-		PRINT_MSG("FIXME: Play a tile");
-		PRINT_MSG("FIXME: Need to handle a player having no playable tiles- should be handled here-ish");
-		PRINT_MSG("FIXME: Need to look up how permanently-unplayable tiles work- should be handled here-ish");
+		
+		PRINT_MSG("FIXME: Verify player has a playable tile; trash their hand and redeal if not");
+		
+		uint8_t tile = getTileToPlay(&gs);
+		PRINT_MSG("FIXME: Play a tile- handle putting it on the board, mergers, etc.");
 		
 		PRINT_MSG("FIXME: Handle any new chains/mergers");
 		PRINT_MSG("FIXME: Allow buying of shares");

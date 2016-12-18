@@ -12,7 +12,16 @@ typedef struct GameState_s GameState_t;
 
 //None indicates a tile is in place, but not part of a chain
 //empty indicates no tile is in place
-typedef enum {CHAIN_LUXOR = 0, CHAIN_TOWER, CHAIN_WORLDWIDE, CHAIN_AMERICAN, CHAIN_FESTIVAL, CHAIN_IMPERIAL, CHAIN_CONTINENTAL, CHAIN_NONE, CHAIN_EMPTY = 255} chain_t;
+typedef enum 	{	CHAIN_LUXOR = 0,
+					CHAIN_TOWER,
+					CHAIN_WORLDWIDE,
+					CHAIN_AMERICAN,
+					CHAIN_FESTIVAL,
+					CHAIN_IMPERIAL,
+					CHAIN_CONTINENTAL,
+					CHAIN_NONE,
+					CHAIN_EMPTY = 255
+				} chain_t;
 
 extern const char* chainNames[];
 

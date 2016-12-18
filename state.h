@@ -17,7 +17,6 @@ typedef struct
 	void (*buyStock)(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy);
 	void (*mergerTrade)(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t merged, uint8_t* tradeFor, uint8_t* sell);
 	uint8_t (*endGame)(GameState_t* gs, uint8_t playerNum);
-	char* name;
 } PlayerActions_t;
 
 typedef struct
@@ -26,6 +25,7 @@ typedef struct
 	int8_t stocks[NUM_CHAINS];
 	uint8_t tiles[HAND_SIZE];
 	PlayerActions_t actions;
+	char* name;
 } Player_t;
 
 struct GameState_s
@@ -42,7 +42,7 @@ struct GameState_s
 
 //Generates a "sanitized" copy of a game state, to be given to <playerNum>
 //This does NOT allocate space for the new game state!
-void makeSanitizedGameStateCopy(GameState_t* gs, GameState_t* newgs, uint8_t playerNum);
+void makeSanitizedGameStateCopy(GameState_t* newgs, GameState_t* gs, uint8_t playerNum);
 
 
 //This function contains the entire game flow logic- setup, operation, and completion

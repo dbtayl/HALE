@@ -5,7 +5,14 @@
 #include "util.h"
 
 
-const char* chainNames[NUM_CHAINS+1] = {"LUXOR", "TOWER", "WORLDWIDE", "AMERICAN", "FESTIVAL", "IMPERIAL", "CONTINENTAL", "NONE"};
+const char* chainNames[NUM_CHAINS+1] = {	"LUXOR",
+											"TOWER",
+											"WORLDWIDE",
+											"AMERICAN",
+											"FESTIVAL",
+											"IMPERIAL",
+											"CONTINENTAL",
+											"NONE"};
 
 const char* chainConsoleColors[NUM_CHAINS] = {ANSI_COLOR_RED, ANSI_COLOR_YELLOW, ANSI_COLOR_RESET, ANSI_COLOR_GREEN, ANSI_COLOR_BLUE, ANSI_COLOR_MAGENTA, ANSI_COLOR_CYAN};
 
