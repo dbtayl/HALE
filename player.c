@@ -28,9 +28,10 @@ HALE_status_t giveTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 
 
 
-int32_t calculatePlayerValue(GameState_t* gs, uint8_t playerNum)
+HALE_status_t calculatePlayerValue(GameState_t* gs, uint8_t playerNum, int32_t* val)
 {
 	CHECK_NULL_PTR(gs, "gs");
+	CHECK_NULL_PTR(val, "val");
 	
 	if(playerNum >= gs->numPlayers)
 	{
@@ -39,10 +40,10 @@ int32_t calculatePlayerValue(GameState_t* gs, uint8_t playerNum)
 	}
 	
 	Player_t* p = &(gs->players[playerNum]);
-	int32_t val = p->cash;
+	*val = p->cash;
 	
 	PRINT_MSG("FIXME: Need to finish calculating the player's value");
 	HANDLE_UNRECOVERABLE_ERROR(HALE_FUNC_NOT_IMPLEMENTED);
 
-	return val;
+	return HALE_OK;
 }

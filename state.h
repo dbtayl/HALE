@@ -42,7 +42,7 @@ struct GameState_s
 
 //Generates a "sanitized" copy of a game state, to be given to <playerNum>
 //This does NOT allocate space for the new game state!
-void makeSanitizedGameStateCopy(GameState_t* newgs, GameState_t* gs, uint8_t playerNum);
+HALE_status_t makeSanitizedGameStateCopy(GameState_t* newgs, GameState_t* gs, uint8_t playerNum);
 
 
 //This function contains the entire game flow logic- setup, operation, and completion

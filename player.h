@@ -75,6 +75,6 @@ HALE_status_t giveTile(GameState_t* gs, uint8_t tile, uint8_t playerNum);
 
 
 //Calculates the current player cash value
-int32_t calculatePlayerValue(GameState_t* gs, uint8_t playerNum);
+HALE_status_t calculatePlayerValue(GameState_t* gs, uint8_t playerNum, int32_t* val);
 
 #endif

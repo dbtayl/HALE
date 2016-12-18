@@ -15,7 +15,7 @@
 
 //Takes an array of tiles, and shuffles them.
 //Really just randomizes any array of size BOARD_TILES
-void shuffleTiles(uint8_t* tiles);
+HALE_status_t shuffleTiles(uint8_t* tiles);
 
 //If possible, draws a tile out of the pool and returns it in <tile>
 //Also decrements the remaining tiles counter
@@ -47,6 +47,11 @@ uint8_t wouldCreateChain(GameState_t* gs, uint8_t tile);
 //Returns the sizes of ALL of the chains- there's really no point in
 //getting the size of just one- it's equal complexity
 HALE_status_t getChainSizes(GameState_t* gs, uint8_t* sizes);
+
+
+//Plays a tile- updates the board to include the new tiles, calls appropriate
+//functions to handle mergers and whatnot
+HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum);
 
 
 #endif

@@ -1,0 +1,3 @@
+-Check more return codes
+-Check for NULL function pointers in player functions before calling
+	-Probably also when loading the player function sets

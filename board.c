@@ -10,9 +10,9 @@
 
 //Not a particularly smart algorithm; for each tile index, picks a random
 //different tile index and swaps the two
-void shuffleTiles(uint8_t* tiles)
+HALE_status_t shuffleTiles(uint8_t* tiles)
 {
-	CHECK_NULL_PTR(tiles, "tiles");
+	CHECK_NULL_PTR_FATAL(tiles, "tiles");
 	
 	int i;
 	for(i = 0; i < BOARD_TILES; i++)
@@ -22,7 +22,7 @@ void shuffleTiles(uint8_t* tiles)
 		tiles[i] = tiles[j];
 		tiles[j] = tmp;
 	}
-	return;
+	return HALE_OK;
 }
 
 
@@ -89,7 +89,8 @@ HALE_status_t dealTile(GameState_t* gs, uint8_t playerNum)
 	if(playerNum >= gs->numPlayers)
 	{
 		PRINT_MSG_INT("playerNum is invalid", playerNum);
-		HANDLE_UNRECOVERABLE_ERROR(HALE_OOB);
+		//HANDLE_UNRECOVERABLE_ERROR(HALE_OOB);
+		return HALE_OOB;
 	}
 #endif //GO_FAST_AND_BREAK_THINGS
 	
@@ -128,7 +129,7 @@ HALE_status_t dealTile(GameState_t* gs, uint8_t playerNum)
 
 //Populates <adjacentSquares> with the values of the squares up, left, right,
 //and down from the tile <tile>.
-void getAdjacentSquares(GameState_t* gs, uint8_t tile, chain_t* adjacentSquares)
+HALE_status_t getAdjacentSquares(GameState_t* gs, uint8_t tile, chain_t* adjacentSquares)
 {
 	CHECK_NULL_PTR(gs, "gs");
 	CHECK_NULL_PTR(adjacentSquares, "adjacentSquares");
@@ -142,6 +143,8 @@ void getAdjacentSquares(GameState_t* gs, uint8_t tile, chain_t* adjacentSquares)
 		uint8_t idx = indices[i];
 		adjacentSquares[i] = (idx == BOARD_NULL) ? CHAIN_EMPTY : gs->board[idx];
 	}
+	
+	return HALE_OK;
 }
 
 
@@ -151,7 +154,13 @@ uint8_t isValidTilePlay(GameState_t* gs, uint8_t tile)
 	//-would merge two safe chains
 	//-would create a chain when there are already 7 in play
 	//-tile is already on the board
-	CHECK_NULL_PTR(gs, "gs");
+	
+	
+	//Not valid if games state isn't valid
+	if(gs == NULL)
+	{
+		return 0;
+	}
 	
 	//Firstly, if the TILE isn't valid, it can't be a valid play
 	//These are arguably redundant checks, but it seems like a good
@@ -160,7 +169,7 @@ uint8_t isValidTilePlay(GameState_t* gs, uint8_t tile)
 	//an invalid more to play a tile that's already in play, so...
 	if( (tile >= BOARD_TILES) || (tile == TILE_NULL) || gs->board[tile] != CHAIN_EMPTY)
 	{
-	    return 0;
+		return 0;
 	}
 	
 	chain_t mergingChains[4];
@@ -285,7 +294,7 @@ uint8_t wouldCreateChain(GameState_t* gs, uint8_t tile)
 	if(tile >= BOARD_TILES)
 	{
 		PRINT_MSG_INT("<tile> is out of bounds", tile);
-		HANDLE_UNRECOVERABLE_ERROR(HALE_OOB);
+		return HALE_OOB;
 	}
 	
 	//First, find out what tiles types are adjacent
@@ -339,4 +348,91 @@ HALE_status_t getChainSizes(GameState_t* gs, uint8_t* sizes)
 	}
 	
 	return HALE_OK;
+}
+
+
+//Expands <tile> on the board, changing all neighboring non-chain tiles
+//to the same chain as <tile>
+HALE_status_t floodFill(GameState_t* gs, uint8_t tile)
+{
+	//FIXME: Finish
+	return HALE_FUNC_NOT_IMPLEMENTED;
+}
+
+
+HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
+{
+	CHECK_NULL_PTR(gs, "gs");
+	
+	HALE_status_t err_code = HALE_OK;
+	
+	//Always make sure it's a valid move in the first place
+	if(!isValidTilePlay(gs, tile))
+	{
+		PRINT_MSG_INT("Bad tile play requested", tile);
+		return HALE_BAD_INPUT;
+	}
+	
+	uint8_t numMergingChains = 0;
+	chain_t mergingChains[NUM_CHAINS]; //FIXME: Technically only 4 chains could merge at once, so this is overkill
+	uint8_t merger = wouldCauseMerger(gs, tile, &numMergingChains, mergingChains);
+	uint8_t create = wouldCreateChain(gs, tile);
+	
+#ifndef GO_FAST_AND_BREAK_THINGS
+	//Should never have a merge AND create a chain at the same time
+	if(merger && create)
+	{
+		PRINT_MSG("ERROR: Both merger and creating a chain?!?!?");
+		return HALE_SHOULD_BE_IMPOSSIBLE;
+	}
+#endif
+	
+	//One or more mergers to be handled
+	if(merger)
+	{
+		//remember to pass a COPY of gs!
+		PRINT_MSG("FIXME: Need to request merger order from player");
+		PRINT_MSG("FIXME: Probably call a different function to handle mergers");
+	}
+	//Need to make a new chain
+	else if(create)
+	{
+		//remember to pass a COPY of gs!
+		
+	}
+	//Tile touches nothing, or tile touches a chain, or tile touches
+	//a chain and one or more non-chain tiles
+	else
+	{
+		chain_t adj[4];
+		getAdjacentSquares(gs, tile, adj);
+		chain_t newType = CHAIN_NONE;
+		
+		//Figure out what chain this tile should be a part of
+		int i;
+		for(i = 0; i < 4; i++)
+		{
+			if(adj[i] < CHAIN_NONE)
+			{
+				newType = adj[i];
+			}
+		}
+		
+		gs->board[tile] = newType;
+		
+		//Figure out if any of the adjacent tiles need to also be
+		//changed- eg, non-chain tiles newly connected to the chain
+		//Could have more than the immediately-adjacent tiles in
+		//a corner case- when the game starts, there might be non-
+		//chain clumps of 2 or more!
+		
+		//Dedicated function to globally clean the board?
+	}
+	
+	PRINT_MSG("FIXME: Need to update the board!");
+	
+	//FIXME
+	HANDLE_UNRECOVERABLE_ERROR(HALE_FUNC_NOT_IMPLEMENTED);
+	
+	return err_code;
 }

@@ -9,7 +9,7 @@
 
 void initializeGameState(GameState_t* gs)
 {
-	CHECK_NULL_PTR(gs, "gs");
+	CHECK_NULL_PTR_FATAL(gs, "gs");
 	
 	gs->numPlayers = 0;
 	gs->currentPlayer = 0;
@@ -54,6 +54,24 @@ void initializeGameState(GameState_t* gs)
 	
 	//Set the current player to something valid
 	gs->currentPlayer = 0;
+}
+
+HALE_status_t configurePlayers(GameState_t* gs, uint8_t numPlayers)
+{
+	CHECK_NULL_PTR(gs, "gs");
+	
+	HALE_status_t err_code = HALE_OK;
+	
+	if(numPlayers > MAX_PLAYERS)
+	{
+		PRINT_MSG_INT("Too many players (%d) requested!", numPlayers);
+		HANDLE_UNRECOVERABLE_ERROR(HALE_OOB);
+	}
+	
+	//FIXME
+	HANDLE_UNRECOVERABLE_ERROR(HALE_FUNC_NOT_IMPLEMENTED);
+	
+	return err_code;
 }
 
 //Deals <HAND_SIZE> tiles to all players
@@ -110,7 +128,7 @@ HALE_status_t placeInitialTiles(GameState_t* gs)
 }
 
 
-void makeSanitizedGameStateCopy(GameState_t* newgs, GameState_t* gs, uint8_t playerNum)
+HALE_status_t makeSanitizedGameStateCopy(GameState_t* newgs, GameState_t* gs, uint8_t playerNum)
 {
 	CHECK_NULL_PTR(gs, "gs");
 	CHECK_NULL_PTR(newgs, "newgs");
@@ -120,7 +138,7 @@ void makeSanitizedGameStateCopy(GameState_t* newgs, GameState_t* gs, uint8_t pla
 	if(playerNum >= gs->numPlayers)
 	{
 		PRINT_MSG_INT("playerNum is invalid", playerNum);
-		HANDLE_UNRECOVERABLE_ERROR(HALE_OOB);
+		return HALE_OOB;
 	}
 #endif //GO_FAST_AND_BREAK_THINGS
 	
@@ -153,6 +171,8 @@ void makeSanitizedGameStateCopy(GameState_t* newgs, GameState_t* gs, uint8_t pla
 			memset(&(newgs->players[i].actions), 0, sizeof(newgs->players[i].actions));
 		}
 	}
+	
+	return HALE_OK;
 }
 
 
@@ -161,7 +181,9 @@ void makeSanitizedGameStateCopy(GameState_t* newgs, GameState_t* gs, uint8_t pla
 //Returns the tile to be played
 uint8_t getTileToPlay(GameState_t* gs)
 {
-	CHECK_NULL_PTR(gs, "gs");
+	//This should only be called from runGame(), so this should NEVER
+	//happen. Thus being a fatal error.
+	CHECK_NULL_PTR_FATAL(gs, "gs");
 	
 	//Check if gs->currentPlayer is in bounds
 #ifndef GO_FAST_AND_BREAK_THINGS
@@ -253,12 +275,6 @@ void runGame(uint8_t numPlayers)
 {
 	int i;
 	
-	if(numPlayers > MAX_PLAYERS)
-	{
-		PRINT_MSG_INT("Too many players (%d) requested!", numPlayers);
-		HANDLE_UNRECOVERABLE_ERROR(HALE_OOB);
-	}
-	
 	//Keep the game state internal to the function; don't want to let
 	//anything else screw with it (except for all the stuff we pass it to)
 	GameState_t gs;
@@ -268,13 +284,7 @@ void runGame(uint8_t numPlayers)
 	initializeGameState(&gs);
 	
 	//Configure players (populate actions)
-	gs.numPlayers = numPlayers;
-	//FIXME
-	for(i = 0; i < numPlayers; i++)
-	{
-		PRINT_MSG("FIXME: Need to populate player function structures");
-		PRINT_MSG("FIXME: Each player will be able to return a name string... verify/sanitize those once here- and record them locally so they can't change it later");
-	}
+	configurePlayers(&gs, numPlayers);
 	
 	//Deal initial tiles
 	dealInitialTiles(&gs);

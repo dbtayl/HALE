@@ -23,7 +23,14 @@
 
 //We'll check for NULL pointers... unless we want to go fast and break things
 #ifndef GO_FAST_AND_BREAK_THINGS
-#define CHECK_NULL_PTR(ptr,var) {if(ptr == NULL){fprintf(stdout, "%s: <%s> is NULL\n", __func__, var); HANDLE_UNRECOVERABLE_ERROR(HALE_BAD_INPUT);}}
+#define CHECK_NULL_PTR_FATAL(ptr,var) {if(ptr == NULL){PRINT_MSG_ARG("FATAL: NULL ptr: ", var); HANDLE_UNRECOVERABLE_ERROR(HALE_BAD_INPUT);}}
+#else
+#define CHECK_NULL_PTR_FATAL(ptr,var) {}
+#endif
+
+//We'll check for NULL pointers... unless we want to go fast and break things
+#ifndef GO_FAST_AND_BREAK_THINGS
+#define CHECK_NULL_PTR(ptr,var) {if(ptr == NULL){PRINT_MSG_ARG("NULL ptr: ", var);  return HALE_BAD_INPUT;}}
 #else
 #define CHECK_NULL_PTR(ptr,var) {}
 #endif

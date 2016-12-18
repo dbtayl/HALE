@@ -45,5 +45,5 @@ uint8_t getRandom8(uint16_t min, uint16_t max)
 #endif //GO_FAST_AND_BREAK_THINGS
 	
 	uint16_t d = (max - min) + 1;
-	return (uint8_t)(rand() % d + min);
+	return (uint8_t)((rand() % d) + min);
 }
