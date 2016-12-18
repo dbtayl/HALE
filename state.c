@@ -7,7 +7,7 @@
 #include "util.h"
 
 
-void initializeGameState(GameState_t* gs)
+static void initializeGameState(GameState_t* gs)
 {
 	CHECK_NULL_PTR_FATAL(gs, "gs");
 	
@@ -56,9 +56,11 @@ void initializeGameState(GameState_t* gs)
 	gs->currentPlayer = 0;
 }
 
-HALE_status_t configurePlayers(GameState_t* gs, uint8_t numPlayers)
+static HALE_status_t configurePlayers(GameState_t* gs, uint8_t numPlayers)
 {
-	CHECK_NULL_PTR(gs, "gs");
+	//This should only be called from runGame(), so any failure in input
+	//should be fatal
+	CHECK_NULL_PTR_FATAL(gs, "gs");
 	
 	HALE_status_t err_code = HALE_OK;
 	
@@ -75,9 +77,11 @@ HALE_status_t configurePlayers(GameState_t* gs, uint8_t numPlayers)
 }
 
 //Deals <HAND_SIZE> tiles to all players
-HALE_status_t dealInitialTiles(GameState_t* gs)
+static HALE_status_t dealInitialTiles(GameState_t* gs)
 {
-	CHECK_NULL_PTR(gs, "gs");
+	//This should only be called from runGame(), so any failure in input
+	//should be fatal
+	CHECK_NULL_PTR_FATAL(gs, "gs");
 	
 	HALE_status_t err_code = HALE_OK;
 	
@@ -101,9 +105,11 @@ HALE_status_t dealInitialTiles(GameState_t* gs)
 
 
 //Draws <numPlayers> tiles and places them on the board
-HALE_status_t placeInitialTiles(GameState_t* gs)
+static HALE_status_t placeInitialTiles(GameState_t* gs)
 {
-	CHECK_NULL_PTR(gs, "gs");
+	//This should only be called from runGame(), so any failure in input
+	//should be fatal
+	CHECK_NULL_PTR_FATAL(gs, "gs");
 	
 	HALE_status_t err_code = HALE_OK;
 	int i;
@@ -179,7 +185,7 @@ HALE_status_t makeSanitizedGameStateCopy(GameState_t* newgs, GameState_t* gs, ui
 //Handles getting a tile from the player, and validating that it's valid
 //for play
 //Returns the tile to be played
-uint8_t getTileToPlay(GameState_t* gs)
+static uint8_t getTileToPlay(GameState_t* gs)
 {
 	//This should only be called from runGame(), so this should NEVER
 	//happen. Thus being a fatal error.
