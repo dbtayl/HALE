@@ -6,6 +6,9 @@
 #include "state.h"
 #include "util.h"
 
+//FIXME: Should probably have a better way of doing this
+#include "ai-random.h"
+
 
 static void initializeGameState(GameState_t* gs)
 {
@@ -69,6 +72,22 @@ static HALE_status_t configurePlayers(GameState_t* gs, uint8_t numPlayers)
 		PRINT_MSG_INT("Too many players (%d) requested!", numPlayers);
 		HANDLE_UNRECOVERABLE_ERROR(HALE_OOB);
 	}
+	
+	//Need to record the number of players in the game into the actual state
+	gs->numPlayers = numPlayers;
+	
+	//FIXME: Shim to allow us to continue...
+	PRINT_MSG("FIXME: Need real implementation; setting all random players as a shim");
+	
+	int i;
+	for(i = 0; i < numPlayers; i++)
+	{
+		gs->players[i].actions = randomActions;
+	}
+	
+	return err_code;
+	
+	//FIXME: End shim
 	
 	//FIXME
 	HANDLE_UNRECOVERABLE_ERROR(HALE_FUNC_NOT_IMPLEMENTED);
@@ -168,8 +187,8 @@ HALE_status_t makeSanitizedGameStateCopy(GameState_t* newgs, GameState_t* gs, ui
 	int i;
 	for(i = 0; i < gs->numPlayers; i++)
 	{
-		//Don't zero out the players own data
-		if(i == playerNum)
+		//Don't zero out the player's own data
+		if(i != playerNum)
 		{
 			//Other players don't get to see what tiles the other players
 			//have, nor what actions the other players have registered
@@ -206,6 +225,7 @@ static uint8_t getTileToPlay(GameState_t* gs)
 	//Before doing anything involving talking to players, make a sanitized
 	//copy of the game state
 	GameState_t gsSanitized;
+	PRINT_MSG("FIXME: Check if making sanitized copy worked!");
 	makeSanitizedGameStateCopy(&gsSanitized, gs, currentPlayer);
 
 	//First, request a tile to be played from the current player
@@ -269,17 +289,132 @@ static uint8_t getTileToPlay(GameState_t* gs)
 	//as far as the board is concerned) and making new chains (again, at
 	//least as far as the board is concerned)
 	
-	PRINT_MSG("FIXME: Need to place tile on board (maybe not- probably different step for that)");
-	
 	//Do NOT deal a new tile- that's a different step
 	
 	return tile;
 }
 
 
+//Deals with purchasing shares
+static HALE_status_t handleSharePurchasePhase(GameState_t* gs)
+{
+	//This should only be called from runGame(), so this should NEVER
+	//happen. Thus being a fatal error.
+	CHECK_NULL_PTR_FATAL(gs, "gs");
+	
+	//Check if gs->currentPlayer is in bounds
+#ifndef GO_FAST_AND_BREAK_THINGS
+	if(gs->currentPlayer >= gs->numPlayers)
+	{
+		PRINT_MSG_INT("gs->currentPlayer is invalid", gs->currentPlayer);
+		HANDLE_UNRECOVERABLE_ERROR(HALE_OOB);
+	}
+#endif //GO_FAST_AND_BREAK_THINGS
+
+	HALE_status_t err_code = HALE_OK;
+
+	uint8_t currentPlayer = gs->currentPlayer;
+
+	GameState_t gsSanitized;
+	PRINT_MSG("FIXME: Check if making sanitized copy worked!");
+	makeSanitizedGameStateCopy(&gsSanitized, gs, currentPlayer);
+
+	//Allow player to request a purchase
+	uint8_t buyRequest[NUM_CHAINS] = {0};
+	gs->players[currentPlayer].actions.buyStock(&gsSanitized, currentPlayer, buyRequest);
+	
+	//Validate that the purchase is valid:
+	//-the request is for no more than 3 shares (==SHARES_PER_TURN) total
+	//-the chains exist
+	//-there are enough shares available to fulfill the request
+	//-the player has enough money
+	
+	uint8_t requestIsValid = 1;
+	
+	
+	//Ensure request is for no more than 3 (==SHARES_PER_TURN) shares total
+	int i;
+	int totalSharesRequested = 0;
+	for(i = 0; i < NUM_CHAINS; i++)
+	{
+		totalSharesRequested += buyRequest[i];
+	}
+	if(totalSharesRequested > SHARES_PER_TURN)
+	{
+		PRINT_MSG_INT("Too many shares requested", totalSharesRequested);
+		requestIsValid = 0;
+	}
+	
+	
+	//Ensure all requested shares have existing chains associated with them
+	uint8_t chainSizes[NUM_CHAINS];
+	PRINT_MSG("FIXME: check return of getChainSizes");
+	getChainSizes(gs, chainSizes);
+	for(i = 0; i < NUM_CHAINS; i++)
+	{
+		if(buyRequest[i] && chainSizes[i] < 2)
+		{
+			PRINT_MSG_INT("Chain doesn't exist", i);
+			requestIsValid = 0;
+		}
+	}
+	
+	
+	//Ensure there are enough shares to fulfill the request
+	for(i = 0; i < NUM_CHAINS; i++)
+	{
+		if(buyRequest[i] > gs->remainingStocks[i])
+		{
+			PRINT_MSG_INT("Not enough shares remining of chain", i);
+			requestIsValid = 0;
+		}
+	}
+	
+	
+	//Ensure player has enough money to pay for the requested purchase
+	int totalCost = 0;
+	int32_t pricePerShare[NUM_CHAINS];
+	PRINT_MSG("FIXME: check return of getChainPricesPerShare");
+	PRINT_MSG("FIXME: Should probably just make one call to getChainPricesPerShare and remove the explicit call to getChainSizes");
+	getChainPricesPerShare(gs, pricePerShare, NULL);
+	for(i = 0; i < NUM_CHAINS; i++)
+	{
+		totalCost += pricePerShare[i] * buyRequest[i];
+	}
+	
+	if(totalCost > gs->players[currentPlayer].cash)
+	{
+		PRINT_MSG_INT("Purchase request cost exceeds player funds", totalCost);
+		requestIsValid = 0;
+	}
+	
+	
+	//If the request is valid, execute the trades
+	if(requestIsValid)
+	{
+		gs->players[currentPlayer].cash -= totalCost;
+		PRINT_MSG("FIXME: Should probably have a generic function for modifying shares a player has, handling moving them between the pool and the player...");
+		for(i = 0; i < NUM_CHAINS; i++)
+		{
+			gs->players[currentPlayer].stocks[i] += buyRequest[i];
+			gs->remainingStocks[i] -= buyRequest[i];
+		}
+	}
+	
+	//Otherwise... well, too bad. The penalty for not checking the validity
+	//of your trade ahead of time is that you don't get to trade
+	else
+	{
+		PRINT_MSG_INT("Invalid trade request; ignoring trade phase. Player", currentPlayer);
+	}
+	
+	return err_code;
+}
+
 void runGame(uint8_t numPlayers)
 {
-	int i;
+	//int i;
+	HALE_status_t err_code = HALE_OK;
 	
 	//Keep the game state internal to the function; don't want to let
 	//anything else screw with it (except for all the stuff we pass it to)
@@ -310,11 +445,27 @@ void runGame(uint8_t numPlayers)
 		
 		PRINT_MSG("FIXME: Verify player has a playable tile; trash their hand and redeal if not");
 		
+		//Request a tile to play from the current player
 		uint8_t tile = getTileToPlay(&gs);
-		PRINT_MSG("FIXME: Play a tile- handle putting it on the board, mergers, etc.");
 		
-		PRINT_MSG("FIXME: Handle any new chains/mergers");
-		PRINT_MSG("FIXME: Allow buying of shares");
+		
+		//Play the tile; process any new chains/mergers
+		err_code = playTile(&gs, tile, gs.currentPlayer);
+		if(err_code != HALE_OK)
+		{
+			PRINT_MSG("FATAL: playTile failed; aborting");
+			HANDLE_UNRECOVERABLE_ERROR(err_code);
+		}
+		
+		
+		err_code = handleSharePurchasePhase(&gs);
+		if(err_code != HALE_OK)
+		{
+			PRINT_MSG("FATAL: handleSharePurchasePhase failed; aborting");
+			HANDLE_UNRECOVERABLE_ERROR(err_code);
+		}
+		
+		
 		PRINT_MSG("FIXME: Allow option to end game, if applicable");
 		
 		
@@ -323,6 +474,9 @@ void runGame(uint8_t numPlayers)
 		
 		//Set the next player
 		gs.currentPlayer = (gs.currentPlayer + 1) % gs.numPlayers;
+		
+		//FIXME: Testing
+		return;
 	}
 	
 	//Now that the game is over, display relevant statistics:

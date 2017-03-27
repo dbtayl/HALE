@@ -12,7 +12,8 @@ const char* err_msg[HALE_NUM_STATUS] =	{	"OK",
 						"BAD_INPUT",
 						"FUNC_NOT_IMPLEMENTED",
 						"AI_BADSTATE",
-						"SHOULD_BE_IMPOSSIBLE"
+						"SHOULD_BE_IMPOSSIBLE",
+						"BOARD_CORRUPTED"
 					};
 
 void handleUnrecoverableError(const char* func, HALE_status_t err_code)
@@ -32,12 +33,12 @@ void handleUnrecoverableError(const char* func, HALE_status_t err_code)
 uint8_t getRandom8(uint16_t min, uint16_t max)
 {
 #ifndef GO_FAST_AND_BREAK_THINGS
-	if( (min & 0x00ff) )
+	if( (min & 0xff00) )
 	{
 		PRINT_MSG_INT("min OOB", min);
 		HANDLE_UNRECOVERABLE_ERROR(HALE_OOB);
 	}
-	if( (max & 0x00ff) )
+	if( (max & 0xff00) )
 	{
 		PRINT_MSG_INT("max OOB", max);
 		HANDLE_UNRECOVERABLE_ERROR(HALE_OOB);

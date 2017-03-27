@@ -41,8 +41,18 @@ uint8_t randomPlayTile(GameState_t* gs, uint8_t playerNum)
 		HANDLE_UNRECOVERABLE_ERROR(HALE_AI_BADSTATE);
 	}
 	
+	uint8_t playThisTile = rand() % numPlayable;
+	
+	PRINT_MSG_INT("Playing tile", playableTiles[playThisTile]);
+	PRINT_MSG("Hand is as follows");
+	for(i = 0; i < HAND_SIZE; i++)
+	{
+		printf("%u ", gs->players[playerNum].tiles[i]);
+	}
+	printf("\n");
+	
 	//Othewise, pick one at random
-	return playableTiles[rand() % numPlayable];
+	return playableTiles[playThisTile];
 }
 
 

@@ -8,6 +8,119 @@
 #include "util.h"
 
 
+//Lookup table for adjacent tiles
+static const uint8_t squareAdjacencies[][4] = {
+	{BOARD_NULL, BOARD_NULL, 1, 12},
+	{BOARD_NULL, 0, 2, 13},
+	{BOARD_NULL, 1, 3, 14},
+	{BOARD_NULL, 2, 4, 15},
+	{BOARD_NULL, 3, 5, 16},
+	{BOARD_NULL, 4, 6, 17},
+	{BOARD_NULL, 5, 7, 18},
+	{BOARD_NULL, 6, 8, 19},
+	{BOARD_NULL, 7, 9, 20},
+	{BOARD_NULL, 8, 10, 21},
+	{BOARD_NULL, 9, 11, 22},
+	{BOARD_NULL, 10, BOARD_NULL, 23},
+	{0, BOARD_NULL, 13, 24},
+	{1, 12, 14, 25},
+	{2, 13, 15, 26},
+	{3, 14, 16, 27},
+	{4, 15, 17, 28},
+	{5, 16, 18, 29},
+	{6, 17, 19, 30},
+	{7, 18, 20, 31},
+	{8, 19, 21, 32},
+	{9, 20, 22, 33},
+	{10, 21, 23, 34},
+	{11, 22, BOARD_NULL, 35},
+	{12, BOARD_NULL, 25, 36},
+	{13, 24, 26, 37},
+	{14, 25, 27, 38},
+	{15, 26, 28, 39},
+	{16, 27, 29, 40},
+	{17, 28, 30, 41},
+	{18, 29, 31, 42},
+	{19, 30, 32, 43},
+	{20, 31, 33, 44},
+	{21, 32, 34, 45},
+	{22, 33, 35, 46},
+	{23, 34, BOARD_NULL, 47},
+	{24, BOARD_NULL, 37, 48},
+	{25, 36, 38, 49},
+	{26, 37, 39, 50},
+	{27, 38, 40, 51},
+	{28, 39, 41, 52},
+	{29, 40, 42, 53},
+	{30, 41, 43, 54},
+	{31, 42, 44, 55},
+	{32, 43, 45, 56},
+	{33, 44, 46, 57},
+	{34, 45, 47, 58},
+	{35, 46, BOARD_NULL, 59},
+	{36, BOARD_NULL, 49, 60},
+	{37, 48, 50, 61},
+	{38, 49, 51, 62},
+	{39, 50, 52, 63},
+	{40, 51, 53, 64},
+	{41, 52, 54, 65},
+	{42, 53, 55, 66},
+	{43, 54, 56, 67},
+	{44, 55, 57, 68},
+	{45, 56, 58, 69},
+	{46, 57, 59, 70},
+	{47, 58, BOARD_NULL, 71},
+	{48, BOARD_NULL, 61, 72},
+	{49, 60, 62, 73},
+	{50, 61, 63, 74},
+	{51, 62, 64, 75},
+	{52, 63, 65, 76},
+	{53, 64, 66, 77},
+	{54, 65, 67, 78},
+	{55, 66, 68, 79},
+	{56, 67, 69, 80},
+	{57, 68, 70, 81},
+	{58, 69, 71, 82},
+	{59, 70, BOARD_NULL, 83},
+	{60, BOARD_NULL, 73, 84},
+	{61, 72, 74, 85},
+	{62, 73, 75, 86},
+	{63, 74, 76, 87},
+	{64, 75, 77, 88},
+	{65, 76, 78, 89},
+	{66, 77, 79, 90},
+	{67, 78, 80, 91},
+	{68, 79, 81, 92},
+	{69, 80, 82, 93},
+	{70, 81, 83, 94},
+	{71, 82, BOARD_NULL, 95},
+	{72, BOARD_NULL, 85, 96},
+	{73, 84, 86, 97},
+	{74, 85, 87, 98},
+	{75, 86, 88, 99},
+	{76, 87, 89, 100},
+	{77, 88, 90, 101},
+	{78, 89, 91, 102},
+	{79, 90, 92, 103},
+	{80, 91, 93, 104},
+	{81, 92, 94, 105},
+	{82, 93, 95, 106},
+	{83, 94, BOARD_NULL, 107},
+	{84, BOARD_NULL, 97, BOARD_NULL},
+	{85, 96, 98, BOARD_NULL},
+	{86, 97, 99, BOARD_NULL},
+	{87, 98, 100, BOARD_NULL},
+	{88, 99, 101, BOARD_NULL},
+	{89, 100, 102, BOARD_NULL},
+	{90, 101, 103, BOARD_NULL},
+	{91, 102, 104, BOARD_NULL},
+	{92, 103, 105, BOARD_NULL},
+	{93, 104, 106, BOARD_NULL},
+	{94, 105, 107, BOARD_NULL},
+	{95, 106, BOARD_NULL, BOARD_NULL}
+};
+
+
 //Not a particularly smart algorithm; for each tile index, picks a random
 //different tile index and swaps the two
 HALE_status_t shuffleTiles(uint8_t* tiles)
@@ -134,13 +247,11 @@ HALE_status_t getAdjacentSquares(GameState_t* gs, uint8_t tile, chain_t* adjacen
 	CHECK_NULL_PTR(gs, "gs");
 	CHECK_NULL_PTR(adjacentSquares, "adjacentSquares");
 	
-	uint8_t indices[4] = {SQUARE_UP(tile), SQUARE_LEFT(tile), SQUARE_RIGHT(tile), SQUARE_DOWN(tile)};
-	
 	//Resolve to state of each square and count up how many uniqe tile types
 	int i;
 	for(i = 0; i < 4; i++)
 	{
-		uint8_t idx = indices[i];
+		uint8_t idx = squareAdjacencies[tile][i];
 		adjacentSquares[i] = (idx == BOARD_NULL) ? CHAIN_EMPTY : gs->board[idx];
 	}
 	
@@ -300,23 +411,22 @@ uint8_t wouldCreateChain(GameState_t* gs, uint8_t tile)
 	//First, find out what tiles types are adjacent
 	//Get indices of board adjacent to tile: Up, left, right, down
 	int i;
-	uint8_t indices[4] = {SQUARE_LEFT(tile), SQUARE_RIGHT(tile), SQUARE_UP(tile), SQUARE_DOWN(tile)};
 	uint8_t nonChainAdjacent = 0;
+	chain_t adj[4];
+	//FIXME: Check return value
+	getAdjacentSquares(gs, tile, adj);
 	
 	//Resolve to state of each square and check for adjacent tiles; if any
 	//chain tiles are adjacent, can return false immediately
 	for(i = 0; i < 4; i++)
 	{
-		uint8_t idx = indices[i];
-		chain_t c = (idx == BOARD_NULL) ? CHAIN_EMPTY : gs->board[idx];
-		
 		//We need at LEAST ONE non-chain tile adjacent to form a new chain
-		if(c == CHAIN_NONE)
+		if(adj[i] == CHAIN_NONE)
 		{
 			nonChainAdjacent = 1;
 		}
 		//If we have ANY chain tiles adjacent, we're not making a new chain
-		else if(c < CHAIN_NONE)
+		else if(adj[i] < CHAIN_NONE)
 		{
 			return 0;
 		}
@@ -351,12 +461,109 @@ HALE_status_t getChainSizes(GameState_t* gs, uint8_t* sizes)
 }
 
 
-//Expands <tile> on the board, changing all neighboring non-chain tiles
+//Expands <tile> on the board, changing all neighboring NON-CHAIN tiles- type CHAIN_NONE only!-
 //to the same chain as <tile>
-HALE_status_t floodFill(GameState_t* gs, uint8_t tile)
+//At MOST, there are numPlayers + 3 tiles to change:
+//-<= numPlayers tiles from initial placement (nominally to determine turn order)
+//-3 other tiles surrounding said tile.
+//Plus one more for the tile itself
+#ifndef MAX_FLOOD_CHECK_SIZE
+#define MAX_FLOOD_CHECK_SIZE (MAX_PLAYERS + 3 + 1)
+#endif
+HALE_status_t floodFillNonChain(GameState_t* gs, uint8_t tile)
 {
-	//FIXME: Finish
-	return HALE_FUNC_NOT_IMPLEMENTED;
+	CHECK_NULL_PTR(gs, "gs");
+	
+	//If we got a bad tile passed in, fail gracefully
+	if(tile >= BOARD_TILES)
+	{
+		PRINT_MSG_INT("Tile OOB", tile);
+		return HALE_OOB;
+	}
+	
+	//If the tile we're referring to isn't part of a chain, that's not helpful
+	if(gs->board[tile] >= CHAIN_NONE)
+	{
+		PRINT_MSG_INT("Specified base tile isn't a chain", gs->board[tile]);
+		return HALE_BAD_INPUT;
+	}
+	
+	
+	uint8_t checkIdx = 0;
+	uint8_t squaresToCheck[MAX_FLOOD_CHECK_SIZE] = {TILE_NULL};
+	
+	uint8_t tmpTile;
+	
+	//Initially populate the "check list" with the tile itself
+	squaresToCheck[checkIdx] = tile;
+	checkIdx++;
+	int i;
+	
+	for(i = 0; i < checkIdx; i++)
+	{
+		tmpTile = squaresToCheck[i];
+#ifndef GO_FAST_AND_BREAK_THINGS
+		//If we're trying to flood-fill next to a DIFFERENT chain,
+		//something is wrong
+		if( (gs->board[tmpTile] < CHAIN_NONE) && (gs->board[tmpTile] != gs->board[tile]) )
+		{
+			PRINT_MSG("Tried to flood fill next to a different chain");
+			return HALE_BOARD_CORRUPTED;
+		}
+#endif
+		
+		//If this is a tile to expand into, do so, then add the
+		//surrounding tiles as tiles to investigate... assuming
+		//they're not already checked or on the list to be checked
+		if(gs->board[tmpTile] == CHAIN_NONE)
+		{
+			//Change state of current tile
+			gs->board[tmpTile] = gs->board[tile];
+			
+			//Check adjacent tiles
+			for(i = 0; i < 4; i++)
+			{
+				//Check if the tile was already on the list
+				uint8_t tmpAdj = squareAdjacencies[tmpTile][i];
+				if(tmpAdj != BOARD_NULL)
+				{
+					uint8_t add = 1;
+					int j;
+					for(j = 0; j < checkIdx; j++)
+					{
+						if(tmpAdj == squaresToCheck[j])
+						{
+							add = 0;
+							break;
+						}
+					}
+					
+					//If the square wasn't already on the list, add it
+					if(add)
+					{
+#ifndef GO_FAST_AND_BREAK_THINGS
+						if(checkIdx == MAX_FLOOD_CHECK_SIZE)
+						{
+							PRINT_MSG("Too many adjacent non-chain tiles!");
+							return HALE_SHOULD_BE_IMPOSSIBLE;
+						}
+#endif
+						squaresToCheck[checkIdx] = tmpAdj;
+						checkIdx++;
+					}
+				} //if(squareAdjacencies[tmpTile][i] != BOARD_NULL)
+			} //for(i = 0; i < 4; i++)
+		} //if(gs->board[tmpTile] == CHAIN_NONE)
+		//If it's not a non-chain tile, AND it's not empty, AND it's not
+		//the same as the current chain, we shouldn't be calling this function
+		else if( (gs->board[tmpTile] != CHAIN_EMPTY) && (gs->board[tmpTile] != gs->board[tile]) )
+		{
+			PRINT_MSG("Tried to flood fill into a different chain");
+			return HALE_SHOULD_BE_IMPOSSIBLE;
+		}
+	} //for(i = 0; i < checkIdx; i++)
+	
+	return HALE_OK;
 }
 
 
@@ -391,6 +598,13 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 	if(merger)
 	{
 		//remember to pass a COPY of gs!
+		GameState_t newgs;
+		err_code = makeSanitizedGameStateCopy(&newgs, gs, playerNum);
+		if(err_code != HALE_OK)
+		{
+			PRINT_MSG("Couldn't create sanitized state for handling merger");
+			return err_code;
+		}
 		PRINT_MSG("FIXME: Need to request merger order from player");
 		PRINT_MSG("FIXME: Probably call a different function to handle mergers");
 	}
@@ -398,7 +612,15 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 	else if(create)
 	{
 		//remember to pass a COPY of gs!
-		
+		GameState_t newgs;
+		err_code = makeSanitizedGameStateCopy(&newgs, gs, playerNum);
+		if(err_code != HALE_OK)
+		{
+			PRINT_MSG("Couldn't create sanitized state for creating chain");
+			return err_code;
+		}
+		PRINT_MSG("FIXME: Need to request chain to create from player");
+		PRINT_MSG("FIXME: Need to act on said request");
 	}
 	//Tile touches nothing, or tile touches a chain, or tile touches
 	//a chain and one or more non-chain tiles
@@ -416,23 +638,35 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 			{
 				newType = adj[i];
 			}
+#ifdef ENABLE_PARANOID_CHECKS
+			//Check if we SHOULD have made a new chain
+			if(adj[i] == CHAIN_NONE)
+			{
+				PRINT_MSG("ERROR: Should have made a new chain, but didn't!");
+				return HALE_SHOULD_BE_IMPOSSIBLE;
+			}
+#endif
 		}
 		
+		//Assign the square to the proper chain
 		gs->board[tile] = newType;
 		
-		//Figure out if any of the adjacent tiles need to also be
-		//changed- eg, non-chain tiles newly connected to the chain
-		//Could have more than the immediately-adjacent tiles in
-		//a corner case- when the game starts, there might be non-
-		//chain clumps of 2 or more!
-		
-		//Dedicated function to globally clean the board?
+		//Update connected tiles with the new chain, if there is one
+		if(newType != CHAIN_NONE)
+		{
+			err_code = floodFillNonChain(gs, tile);
+			if(err_code != HALE_OK)
+			{
+				PRINT_MSG("Flood fill failed");
+				return err_code;
+			}
+		}
 	}
 	
-	PRINT_MSG("FIXME: Need to update the board!");
+	PRINT_MSG("FIXME: Need to update the board, based on mergers and stuff?");
 	
 	//FIXME
-	HANDLE_UNRECOVERABLE_ERROR(HALE_FUNC_NOT_IMPLEMENTED);
+	//HANDLE_UNRECOVERABLE_ERROR(HALE_FUNC_NOT_IMPLEMENTED);
 	
 	return err_code;
 }

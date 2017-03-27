@@ -11,7 +11,7 @@ int main()
 	//FIXME: Figure out player configuration (number of players, human/AI)
 	PRINT_MSG("FIXME: Need to identify player configuration: number of players, human/AI, ...");
 	
-	//FIXME: Initialize GUI
+	//FIXME: Initialize UI
 	
 	//Seed random number generator
 	srand(time(NULL));

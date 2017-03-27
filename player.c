@@ -23,6 +23,7 @@ HALE_status_t giveTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 		}
 	}
 	
+	PRINT_MSG("Tried to give a tile to a player with a full hand!");
 	return HALE_PLAYER_HAND_FULL;
 }
 

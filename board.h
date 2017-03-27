@@ -7,6 +7,9 @@
 
 //Macros to get the index of the square above/below/left-of/right-of
 //the square given. Returns BOARD_NULL if invalid.
+//These should NOT be used internally- there's a lookup table for that.
+//If you want your own lookup table, make it yourself! I don't want to deal
+//with players possibly hosing the lookup table.
 #define SQUARE_UP(x) ( (x >= BOARD_WIDTH) ? (x - BOARD_WIDTH) : BOARD_NULL)
 #define SQUARE_DOWN(x) ( (x < (BOARD_TILES - BOARD_WIDTH)) ? (x + BOARD_WIDTH) : BOARD_NULL)
 #define SQUARE_LEFT(x) ( ((x % BOARD_WIDTH) > 0) ? (x - 1) : BOARD_NULL)
