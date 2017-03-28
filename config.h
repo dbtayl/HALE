@@ -60,4 +60,5 @@ extern const char* err_msg[];
 #define SHARES_PER_TURN (3)
 
 
+
 #endif

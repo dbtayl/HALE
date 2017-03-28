@@ -270,6 +270,7 @@ uint8_t isValidTilePlay(GameState_t* gs, uint8_t tile)
 	//Not valid if games state isn't valid
 	if(gs == NULL)
 	{
+		PRINT_MSG("gs invalid -> tile invalid");
 		return 0;
 	}
 	
@@ -280,6 +281,7 @@ uint8_t isValidTilePlay(GameState_t* gs, uint8_t tile)
 	//an invalid more to play a tile that's already in play, so...
 	if( (tile >= BOARD_TILES) || (tile == TILE_NULL) || gs->board[tile] != CHAIN_EMPTY)
 	{
+		PRINT_MSG_INT("tile OOB... or something like that. tile was", tile);
 		return 0;
 	}
 	
@@ -315,6 +317,7 @@ uint8_t isValidTilePlay(GameState_t* gs, uint8_t tile)
 		//If two or more are safe, it's an illegal move
 		if(safeCount > 1)
 		{
+			PRINT_MSG_INT("tile would merge two safe chains. tile", tile);
 			return 0;
 		}
 	}
@@ -338,6 +341,7 @@ uint8_t isValidTilePlay(GameState_t* gs, uint8_t tile)
 		//if not, return invalid move
 		if(!legal)
 		{
+			PRINT_MSG_INT("tile would create a new chain, but no new chains available. tile", tile);
 			return 0;
 		}
 	}
@@ -597,6 +601,7 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 	//One or more mergers to be handled
 	if(merger)
 	{
+		PRINT_MSG_INT("Tile would cause merger", tile);
 		//remember to pass a COPY of gs!
 		GameState_t newgs;
 		err_code = makeSanitizedGameStateCopy(&newgs, gs, playerNum);
@@ -611,6 +616,7 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 	//Need to make a new chain
 	else if(create)
 	{
+		PRINT_MSG_INT("Tile would create new chain", tile);
 		//remember to pass a COPY of gs!
 		GameState_t newgs;
 		err_code = makeSanitizedGameStateCopy(&newgs, gs, playerNum);
@@ -619,8 +625,37 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 			PRINT_MSG("Couldn't create sanitized state for creating chain");
 			return err_code;
 		}
-		PRINT_MSG("FIXME: Need to request chain to create from player");
+		
+		//Request chain to form from the player
+		chain_t chainToCreate = gs->players[playerNum].actions.formChain(&newgs, playerNum);
+		
+		//Before doing anything, validate that the requested chain can, in fact, be created
+		uint8_t chainSizes[NUM_CHAINS];
+		getChainSizes(gs, chainSizes);
+		if(chainSizes[chainToCreate] > 0)
+		{
+			PRINT_MSG_INT("Requested to form invalid chain; picking one for them... requested", chainToCreate);
+			int i;
+			for(i = 0; i < NUM_CHAINS; i++)
+			{
+				if(chainSizes[i] == 0)
+				{
+					chainToCreate = i;
+					break;
+				}
+			}
+#ifdef ENABLE_PARANOID_CHECKS
+			if(i >= NUM_CHAINS)
+			{
+				PRINT_MSG("Should-be-impossible: Can't find chain to form, but tile identified as valid to play");
+				HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
+			}
+#endif
+		}
+		
 		PRINT_MSG("FIXME: Need to act on said request");
+		gs->board[tile] = chainToCreate;
+		floodFillNonChain(gs, tile);
 	}
 	//Tile touches nothing, or tile touches a chain, or tile touches
 	//a chain and one or more non-chain tiles
@@ -670,3 +705,73 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 	
 	return err_code;
 }
+
+
+//Game is eligible to end iff:
+//-any one chain is 41+ tiles (CHAIN_SIZE_GAME_END)
+//-ALL chains in play are safe (SAFE_CHAIN_SIZE or greater)
+uint8_t canEndGame(GameState_t* gs)
+{
+	CHECK_NULL_PTR(gs, "gs");
+	
+	uint8_t allChainsSafe = 1;
+	uint8_t someChainBigEnough = 0;
+	uint8_t chainSizes[NUM_CHAINS];
+	
+	getChainSizes(gs, chainSizes);
+	PRINT_MSG("FIXME: Should check if getChainSizes succeeded");
+	
+	int i;
+	for(i = 0; i < NUM_CHAINS; i++)
+	{
+		if(chainSizes[i] < SAFE_CHAIN_SIZE)
+		{
+			allChainsSafe = 0;
+		}
+		else if(chainSizes[i] >= CHAIN_SIZE_GAME_END)
+		{
+			someChainBigEnough = 1;
+		}
+	}
+	
+	return (allChainsSafe | someChainBigEnough);
+}
+
+
+//CLI representations of each chain
+const char* chainStrings[NUM_CHAINS+2] = {ANSI_COLOR_BRIGHT_RED"L"ANSI_COLOR_RESET,
+					ANSI_COLOR_BRIGHT_YELLOW"T"ANSI_COLOR_RESET, 
+					ANSI_COLOR_YELLOW"W"ANSI_COLOR_RESET,
+					ANSI_COLOR_BRIGHT_BLUE"A"ANSI_COLOR_RESET,
+					ANSI_COLOR_GREEN"F"ANSI_COLOR_RESET,
+					ANSI_COLOR_BRIGHT_MAGENTA"I"ANSI_COLOR_RESET,
+					ANSI_COLOR_BRIGHT_CYAN"C"ANSI_COLOR_RESET,
+					"#"ANSI_COLOR_RESET,
+					"."ANSI_COLOR_RESET
+				};
+
+HALE_status_t printGameBoard(GameState_t* gs)
+{
+	CHECK_NULL_PTR(gs, "gs");
+	
+	int i, j;
+	for(i = 0; i < BOARD_HEIGHT; i++)
+	{
+		for(j = 0; j < BOARD_WIDTH; j++)
+		{
+			chain_t tileType = gs->board[i*BOARD_WIDTH+j];
+			if(tileType == CHAIN_EMPTY)
+			{
+				tileType = CHAIN_NONE+1;
+			}
+				
+			printf("%s ", chainStrings[tileType]);
+		}
+		printf("\n");
+	}
+	
+	printf("\n");
+	
+	return HALE_OK;
+}
+

@@ -8,7 +8,13 @@
 typedef struct GameState_s GameState_t;
 
 #define NUM_CHAINS (7)
+
+//How big a chain has to be before it cannot disappear
 #define SAFE_CHAIN_SIZE (11)
+
+//How large a chain must be to qualify for ending the game
+#define CHAIN_SIZE_GAME_END (41)
+
 
 //None indicates a tile is in place, but not part of a chain
 //empty indicates no tile is in place

@@ -57,4 +57,12 @@ HALE_status_t getChainSizes(GameState_t* gs, uint8_t* sizes);
 HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum);
 
 
+//Returns non-zero if the game is eligible to be ended
+uint8_t canEndGame(GameState_t* gs);
+
+
+//Prints the board out to the terminal
+HALE_status_t printGameBoard(GameState_t* gs);
+
+
 #endif

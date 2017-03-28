@@ -411,6 +411,29 @@ static HALE_status_t handleSharePurchasePhase(GameState_t* gs)
 	return err_code;
 }
 
+
+static HALE_status_t handleEndGameQueryPhase(GameState_t* gs, uint8_t* endGame)
+{
+	CHECK_NULL_PTR(gs, "gs");
+	CHECK_NULL_PTR(endGame, "endGame");
+	
+	GameState_t gsSanitized;
+	PRINT_MSG("FIXME: Check if making sanitized copy worked!");
+	makeSanitizedGameStateCopy(&gsSanitized, gs, gs->currentPlayer);
+	
+	uint8_t wantToEndGame = gs->players[gs->currentPlayer].actions.endGame(&gsSanitized, gs->currentPlayer);
+	
+	//Could/should probably just assign this directly, but want to keep all player actions completely
+	//separate from game
+	if(wantToEndGame)
+	{
+		*endGame = 1;
+	}
+	
+	return HALE_OK;
+}
+
+
 void runGame(uint8_t numPlayers)
 {
 	//int i;
@@ -440,13 +463,12 @@ void runGame(uint8_t numPlayers)
 	uint8_t gameOver = 0;
 	while(!gameOver)
 	{
-		PRINT_MSG("FIXME: Need to run actual game!");
-		
-		
+		printf("\n\n");
 		PRINT_MSG("FIXME: Verify player has a playable tile; trash their hand and redeal if not");
 		
 		//Request a tile to play from the current player
 		uint8_t tile = getTileToPlay(&gs);
+		PRINT_MSG_INT("Playing tile", tile);
 		
 		
 		//Play the tile; process any new chains/mergers
@@ -466,7 +488,22 @@ void runGame(uint8_t numPlayers)
 		}
 		
 		
-		PRINT_MSG("FIXME: Allow option to end game, if applicable");
+		if(canEndGame(&gs))
+		{
+			PRINT_MSG("Ending game is allowed right now!");
+			err_code = handleEndGameQueryPhase(&gs, &gameOver);
+			if(err_code != HALE_OK)
+			{
+				PRINT_MSG("FATAL: handleEndGameQueryPhase failed; aborting");
+				HANDLE_UNRECOVERABLE_ERROR(err_code);
+			}
+			
+			//No need to deal tiles or set next player if we're ending the game
+			if(gameOver)
+			{
+				break;
+			}
+		}
 		
 		
 		//Deal a tile to the player that just went
@@ -476,7 +513,10 @@ void runGame(uint8_t numPlayers)
 		gs.currentPlayer = (gs.currentPlayer + 1) % gs.numPlayers;
 		
 		//FIXME: Testing
-		return;
+		printGameBoard(&gs);
+		//return;
+		
+		
 	}
 	
 	//Now that the game is over, display relevant statistics:
@@ -485,4 +525,5 @@ void runGame(uint8_t numPlayers)
 	//-total value of each player (bonuses + holdings + cash)
 	//-Player type/name
 	PRINT_MSG("FIXME: Should display a game postmortum here");
+	printGameBoard(&gs);
 }
