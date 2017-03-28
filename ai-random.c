@@ -112,8 +112,9 @@ void randomBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy)
 	//Also subtract from this as we "buy" stocks to keep track of whether
 	//we can buy others
 	int32_t cash = gs->players[playerNum].cash;
+	uint8_t chainSizes[NUM_CHAINS];
 	
-	getChainPricesPerShare(gs, prices, NULL);
+	getChainPricesPerShare(gs, prices, chainSizes);
 	
 	int i;
 	for(i = 0; i < NUM_CHAINS; i++)
@@ -122,7 +123,7 @@ void randomBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy)
 		toBuy[i] = 0;
 		
 		//If the chain exists and has stock left, see if we could buy any
-		if( (prices[i] > 0) && (gs->remainingStocks[i] > 0) )
+		if( (prices[i] > 0) && (gs->remainingStocks[i] > 0) && (chainSizes[i] > 1) )
 		{
 			//How many you could buy could be limited by number
 			//left on the market, how many shares you can buy
@@ -136,6 +137,12 @@ void randomBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy)
 			options[numOptions] = i;
 			numOptions++;
 		}
+	}
+	
+	//If there are no options of things to buy... don't buy anything
+	if(numOptions == 0)
+	{
+		return;
 	}
 	
 	//Now we know how many of each chain we COULD buy, at most.
