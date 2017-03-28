@@ -476,7 +476,6 @@ HALE_status_t getChainSizes(GameState_t* gs, uint8_t* sizes)
 #endif
 HALE_status_t floodFillNonChain(GameState_t* gs, uint8_t tile)
 {
-	PRINT_MSG("START");
 	CHECK_NULL_PTR(gs, "gs");
 	
 	//If we got a bad tile passed in, fail gracefully
@@ -536,7 +535,7 @@ HALE_status_t floodFillNonChain(GameState_t* gs, uint8_t tile)
 			{
 				//Check if the tile was already on the list
 				uint8_t tmpAdj = squareAdjacencies[tmpTile][k];
-				if(tmpAdj != BOARD_NULL)
+				if( (tmpAdj != BOARD_NULL) && (gs->board[tmpAdj] != CHAIN_EMPTY) )
 				{
 					uint8_t add = 1;
 					int j;
@@ -575,7 +574,6 @@ HALE_status_t floodFillNonChain(GameState_t* gs, uint8_t tile)
 		}
 		PRINT_MSG_INT("checkIdx", checkIdx);
 	} //for(i = 0; i < checkIdx; i++)
-	PRINT_MSG("END");
 	
 	return HALE_OK;
 }
