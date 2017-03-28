@@ -476,6 +476,7 @@ HALE_status_t getChainSizes(GameState_t* gs, uint8_t* sizes)
 #endif
 HALE_status_t floodFillNonChain(GameState_t* gs, uint8_t tile)
 {
+	PRINT_MSG("START");
 	CHECK_NULL_PTR(gs, "gs");
 	
 	//If we got a bad tile passed in, fail gracefully
@@ -505,6 +506,7 @@ HALE_status_t floodFillNonChain(GameState_t* gs, uint8_t tile)
 	
 	for(i = 0; i < checkIdx; i++)
 	{
+		PRINT_MSG_INT("iterate", checkIdx);
 		tmpTile = squaresToCheck[i];
 #ifndef GO_FAST_AND_BREAK_THINGS
 		//If we're trying to flood-fill next to a DIFFERENT chain,
@@ -519,16 +521,21 @@ HALE_status_t floodFillNonChain(GameState_t* gs, uint8_t tile)
 		//If this is a tile to expand into, do so, then add the
 		//surrounding tiles as tiles to investigate... assuming
 		//they're not already checked or on the list to be checked
-		if(gs->board[tmpTile] == CHAIN_NONE)
+		//FIXME: The second part of this expression is just a hack
+		//to make it evaluate the first tile- should really fix the
+		//logic/flow instead.
+		PRINT_MSG_INT("Type of tile we're looking at", gs->board[tmpTile]);
+		if( (gs->board[tmpTile] == CHAIN_NONE) || (tmpTile == tile) )
 		{
 			//Change state of current tile
 			gs->board[tmpTile] = gs->board[tile];
 			
 			//Check adjacent tiles
-			for(i = 0; i < 4; i++)
+			int k;
+			for(k = 0; k < 4; k++)
 			{
 				//Check if the tile was already on the list
-				uint8_t tmpAdj = squareAdjacencies[tmpTile][i];
+				uint8_t tmpAdj = squareAdjacencies[tmpTile][k];
 				if(tmpAdj != BOARD_NULL)
 				{
 					uint8_t add = 1;
@@ -545,6 +552,7 @@ HALE_status_t floodFillNonChain(GameState_t* gs, uint8_t tile)
 					//If the square wasn't already on the list, add it
 					if(add)
 					{
+						PRINT_MSG_INT("Adding tile to to-check list", tmpAdj);
 #ifndef GO_FAST_AND_BREAK_THINGS
 						if(checkIdx == MAX_FLOOD_CHECK_SIZE)
 						{
@@ -565,7 +573,9 @@ HALE_status_t floodFillNonChain(GameState_t* gs, uint8_t tile)
 			PRINT_MSG("Tried to flood fill into a different chain");
 			return HALE_SHOULD_BE_IMPOSSIBLE;
 		}
+		PRINT_MSG_INT("checkIdx", checkIdx);
 	} //for(i = 0; i < checkIdx; i++)
+	PRINT_MSG("END");
 	
 	return HALE_OK;
 }
