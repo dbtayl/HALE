@@ -462,8 +462,8 @@ uint8_t wouldCauseMerger(GameState_t* gs, uint8_t tile, uint8_t* numMergingChain
 	}//for(i = 0; i < 4; i++)
 	
 	
-	//Step 3: Return 1 if more than one chain is immediately-adjacent
-	return (*numMergingChains > 0) ? 1 : 0;
+	//Step 3: Return 1 if MORE THAN ONE chain is immediately-adjacent
+	return (*numMergingChains > 1) ? 1 : 0;
 }
 
 
