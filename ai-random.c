@@ -25,6 +25,13 @@ uint8_t randomPlayTile(GameState_t* gs, uint8_t playerNum)
 	for(i = 0; i < HAND_SIZE; i++)
 	{
 		uint8_t tile = gs->players[playerNum].tiles[i];
+		
+		//Don't bother checking if tile is null
+		if(tile == TILE_NULL)
+		{
+			continue;
+		}
+		
 		if(isValidTilePlay(gs, tile))
 		{
 			//increment the count of playable tiles AFTER using

@@ -217,6 +217,7 @@ HALE_status_t dealTile(GameState_t* gs, uint8_t playerNum)
 		if(err_code == HALE_TILE_POOL_EMPTY)
 		{
 			PRINT_MSG("No tiles left in pool");
+			return err_code;
 		}
 		//Otherwise, something really bad happened; go to error handler
 		else
@@ -236,6 +237,54 @@ HALE_status_t dealTile(GameState_t* gs, uint8_t playerNum)
 		HANDLE_UNRECOVERABLE_ERROR(err_code);
 	}
 	 
+	return HALE_OK;
+}
+
+HALE_status_t redealTiles(GameState_t* gs, uint8_t playerNum)
+{
+	CHECK_NULL_PTR(gs,"gs");
+	
+	//Check if playerNum is in bounds
+#ifndef GO_FAST_AND_BREAK_THINGS
+	if(playerNum >= gs->numPlayers)
+	{
+		PRINT_MSG_INT("playerNum is invalid", playerNum);
+		//HANDLE_UNRECOVERABLE_ERROR(HALE_OOB);
+		return HALE_OOB;
+	}
+#endif //GO_FAST_AND_BREAK_THINGS
+
+	//If there are no tiles left, do NOT do anything- player might as
+	//well keep what hand they have in the hopes it will become valid
+	//later
+	if(gs->remainingTiles == 0)
+	{
+		PRINT_MSG_INT("Not redealing; no tiles left. Player", playerNum);
+		
+		//FIXME: Is this an error?
+		return HALE_OK;
+	}
+	
+
+	//First, nuke the player's hand
+	for(int i = 0; i < HAND_SIZE; i++)
+	{
+		gs->players[playerNum].tiles[i] = TILE_NULL;
+	}
+	
+	//Then, try to deal a full new hand
+	for(int i = 0; i < HAND_SIZE; i++)
+	{
+		HALE_status_t err = dealTile(gs, playerNum);
+		//Regardless of WHAT the error is, we stop here
+		//If the tile pool is empty, we're done. If something else
+		//happened, we're ALSO done.
+		if(err != HALE_OK)
+		{
+			return err;
+		}
+	}
+	
 	return HALE_OK;
 }
 
@@ -293,6 +342,7 @@ uint8_t isValidTilePlay(GameState_t* gs, uint8_t tile)
 	//If it doesn't cause a merger or create a chain, it must be OK
 	if(!merge && !create)
 	{
+		PRINT_MSG_INT("tile valid", tile);
 		return 1;
 	}
 	
@@ -320,6 +370,8 @@ uint8_t isValidTilePlay(GameState_t* gs, uint8_t tile)
 			PRINT_MSG_INT("tile would merge two safe chains. tile", tile);
 			return 0;
 		}
+		
+		PRINT_MSG_INT("tile would cause valid merger", tile);
 	}
 	
 	//If this would create a chain, make sure creating a chain is legal
@@ -349,6 +401,21 @@ uint8_t isValidTilePlay(GameState_t* gs, uint8_t tile)
 	
 	//If it's not illegal, it must be legal
 	return 1;
+}
+
+//Returns the number of tiles a player has that are valid to play
+uint8_t getNumValidTiles(GameState_t* gs, uint8_t playerNum)
+{
+	uint8_t validCount = 0;
+	for(int i = 0; i < HAND_SIZE; i++)
+	{
+		if(isValidTilePlay(gs, gs->players[playerNum].tiles[i]))
+		{
+			validCount++;
+		}
+	}
+	
+	return validCount;
 }
 
 
@@ -579,8 +646,12 @@ HALE_status_t floodFillNonChain(GameState_t* gs, uint8_t tile)
 }
 
 
+//FIXME: This is handling game state stuff that it probably shouldn't- maybe
+//populate an argument with the result of a play (eg, nothing, merger, expanding
+//a chain(?), create new chain, ...)?
 HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 {
+	PRINT_MSG("FIXME: This function seems to be doing stuff out of its scope...");
 	CHECK_NULL_PTR(gs, "gs");
 	
 	HALE_status_t err_code = HALE_OK;
@@ -619,7 +690,15 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 			return err_code;
 		}
 		PRINT_MSG("FIXME: Need to request merger order from player");
-		PRINT_MSG("FIXME: Probably call a different function to handle mergers");
+		PRINT_MSG("FIXME: Shim! Just merge in order...");
+		int i;
+		for(i = 0; i < numMergingChains - 1; i++)
+		{
+			//FIXME: Need to handle mergers...
+			PRINT_MSG("FIXME: Probably call a different function to handle mergers");
+		}
+		
+		
 	}
 	//Need to make a new chain
 	else if(create)
@@ -661,9 +740,9 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 #endif
 		}
 		
-		PRINT_MSG("FIXME: Need to act on said request");
 		gs->board[tile] = chainToCreate;
 		floodFillNonChain(gs, tile);
+		PRINT_MSG("FIXME: Need to award stock to founder, if possible");
 	}
 	//Tile touches nothing, or tile touches a chain, or tile touches
 	//a chain and one or more non-chain tiles
@@ -747,6 +826,7 @@ uint8_t canEndGame(GameState_t* gs)
 
 
 //CLI representations of each chain
+//FIXME: Should probably go elsewhere
 const char* chainStrings[NUM_CHAINS+2] = {ANSI_COLOR_BRIGHT_RED"L"ANSI_COLOR_RESET,
 					ANSI_COLOR_BRIGHT_YELLOW"T"ANSI_COLOR_RESET, 
 					ANSI_COLOR_YELLOW"W"ANSI_COLOR_RESET,

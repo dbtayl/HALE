@@ -1,3 +1,5 @@
 -Check more return codes
 -Check for NULL function pointers in player functions before calling
 	-Probably also when loading the player function sets
+-Finish playTile function in board.c- handling mergers and whatnot
+-Check that nothing exposed to the AI can cause a fatal error

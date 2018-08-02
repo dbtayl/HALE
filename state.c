@@ -464,22 +464,72 @@ void runGame(uint8_t numPlayers)
 	while(!gameOver)
 	{
 		printf("\n\n");
-		PRINT_MSG("FIXME: Verify player has a playable tile; trash their hand and redeal if not");
 		
-		//Request a tile to play from the current player
-		uint8_t tile = getTileToPlay(&gs);
-		PRINT_MSG_INT("Playing tile", tile);
-		
-		
-		//Play the tile; process any new chains/mergers
-		err_code = playTile(&gs, tile, gs.currentPlayer);
-		if(err_code != HALE_OK)
+		//Make sure the current player can actually play... If not, try
+		//to do something about it.
+		uint8_t numValidTiles = getNumValidTiles(&gs, gs.currentPlayer);
+		while(numValidTiles == 0)
 		{
-			PRINT_MSG("FATAL: playTile failed; aborting");
-			HANDLE_UNRECOVERABLE_ERROR(err_code);
+			PRINT_MSG_INT("Player has no valid tiles, redealing. Player", gs.currentPlayer);
+			
+			//Don't try to redeal tiles if there aren't any left
+			if(gs.remainingTiles > 0)
+			{
+				HALE_status_t err = redealTiles(&gs, gs.currentPlayer);
+				
+				//Running out of tiles is acceptable (could have partially redealt)
+				//Anything else... not so much
+				if(err != HALE_OK && err != HALE_TILE_POOL_EMPTY)
+				{
+					PRINT_MSG("FATAL: Couldn't handle redealing player hand");
+					HANDLE_UNRECOVERABLE_ERROR(err);
+				}
+			}
+			//If the player has no valid tiles AND there are no tiles to redeal with... tough. No playing for you!
+			else
+			{
+				PRINT_MSG_INT("No tiles left to redeal ot player", gs.currentPlayer);
+				break;
+			}
+			
+			//Hopefully have at least one valid tile now...
+			numValidTiles = getNumValidTiles(&gs, gs.currentPlayer);
 		}
 		
+		//Request a tile to play from the current player
+		//If the player has no valid tiles at this point, it must mean the
+		//draw pile is out as well, and they have to skip playing
+		if(numValidTiles > 0)
+		{
+			uint8_t tile = getTileToPlay(&gs);
+			PRINT_MSG_INT("Playing tile", tile);
+			
+			
+			//Play the tile; process any new chains/mergers
+			err_code = playTile(&gs, tile, gs.currentPlayer);
+			if(err_code != HALE_OK)
+			{
+				PRINT_MSG("FATAL: playTile failed; aborting");
+				HANDLE_UNRECOVERABLE_ERROR(err_code);
+			}
+		}
+		//If we can't play, at least make a note of it
+		else
+		{
+			PRINT_MSG_INT("No tiles left, and player can't play; skipping tile play phase", gs.currentPlayer);
+#ifdef ENABLE_PARANOID_CHECKS
+			//This should never happen- should only be possible to end up with
+			//an unplayable hand if the tile draw stack is empty
+			if(gs.remainingTiles > 0)
+			{
+				PRINT_MSG("FATAL: Player can't play, yet tiles remain in draw pile");
+				HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
+			}
+		}
+#endif
 		
+		
+		//Allow player to purchase shares
 		err_code = handleSharePurchasePhase(&gs);
 		if(err_code != HALE_OK)
 		{
@@ -514,6 +564,10 @@ void runGame(uint8_t numPlayers)
 		
 		//FIXME: Testing
 		printGameBoard(&gs);
+		for(int i = 0; i < gs.numPlayers; i++)
+		{
+			printPlayer(&gs, i);
+		}
 		//return;
 		
 		

@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "config.h"
 #include "player.h"
 #include "state.h"
@@ -47,4 +49,23 @@ HALE_status_t calculatePlayerValue(GameState_t* gs, uint8_t playerNum, int32_t* 
 	HANDLE_UNRECOVERABLE_ERROR(HALE_FUNC_NOT_IMPLEMENTED);
 
 	return HALE_OK;
+}
+
+void printPlayer(GameState_t* gs, uint8_t playerNum)
+{
+	Player_t* player = &(gs->players[playerNum]);
+	//FIXME: Trying to avoid printfs...
+	fprintf(stdout, "Player %d (%s)\n", playerNum, player->name);
+	fprintf(stdout, "$%d\n", player->cash);
+	fprintf(stdout, "Tiles: ");
+	for(int i = 0; i < HAND_SIZE; i++)
+	{
+		fprintf(stdout, "%d ", player->tiles[i]);
+	}
+	fprintf(stdout, "\nStocks: ");
+	for(int i = 0; i < NUM_CHAINS; i++)
+	{
+		fprintf(stdout, "%d ", player->stocks[i]);
+	}
+	fprintf(stdout, "\n");
 }

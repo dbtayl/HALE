@@ -47,7 +47,7 @@
  * should write the numbers of each kind of stock they want to buy into the
  * array <toBuy>, with the TYPE of stock being selected by the index into
  * the array, using CHAIN_* values.
- * The number of stocks purchased must be <= 3, and the player must have
+ * The number of stocks purchased must be <= 3 (==SHARES_PER_TURN), and the player must have
  * sufficient cash to purchase the shares.
  */
 
@@ -76,5 +76,9 @@ HALE_status_t giveTile(GameState_t* gs, uint8_t tile, uint8_t playerNum);
 
 //Calculates the current player cash value
 HALE_status_t calculatePlayerValue(GameState_t* gs, uint8_t playerNum, int32_t* val);
+
+
+//Prints out entire player state
+void printPlayer(GameState_t* gs, uint8_t playerNum);
 
 #endif

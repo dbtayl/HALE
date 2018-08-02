@@ -27,10 +27,18 @@ HALE_status_t drawTile(GameState_t* gs, uint8_t* tile);
 //Attempts to draw a tile and give it to the player number indicated
 HALE_status_t dealTile(GameState_t* gs, uint8_t playerNum);
 
+//Completely wipes out and redeals a players hand
+//Useful at the beginning of the game, then also when a player has an
+//unplayable hand
+HALE_status_t redealTiles(GameState_t* gs, uint8_t playerNum);
+
 
 //Returns zero if a tile is invalid to play, non-zero if it's a valid move
 uint8_t isValidTilePlay(GameState_t* gs, uint8_t tile);
 
+
+//Returns the number of tiles a player has that are valid to play
+uint8_t getNumValidTiles(GameState_t* gs, uint8_t playerNum);
 
 //Returns zero if playing the specified tile would NOT cause a merger; non-
 //zero otherwise
