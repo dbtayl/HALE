@@ -760,15 +760,10 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 			{
 				newType = adj[i];
 			}
-#ifdef ENABLE_PARANOID_CHECKS
-			//Check if we SHOULD have made a new chain
-			if(adj[i] == CHAIN_NONE)
-			{
-				PRINT_MSG("ERROR: Should have made a new chain, but didn't!");
-				return HALE_SHOULD_BE_IMPOSSIBLE;
-			}
-#endif
 		}
+		
+		//FIXME: Add a secondary paranoid check to make sure we
+		//didn't screw anything up here
 		
 		//Assign the square to the proper chain
 		gs->board[tile] = newType;
