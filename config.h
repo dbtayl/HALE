@@ -10,6 +10,11 @@
 //Optionally turn off some safety checks to try to go faster
 //#define GO_FAST_AND_BREAK_THINGS
 
+//Artificial delay between turns, for debugging
+//Milliseconds between turns. Comment out to disable (or set to 0, but
+//that still has overhead)
+#define TURN_DELAY 1000
+
 //Return values
 typedef enum	{	HALE_OK = 0,
 					HALE_FAIL,

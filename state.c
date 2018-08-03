@@ -5,6 +5,11 @@
 #include "config.h"
 #include "state.h"
 #include "util.h"
+#include "player.h"
+
+#ifdef TURN_DELAY
+#include <unistd.h>
+#endif
 
 //FIXME: Should probably have a better way of doing this
 #include "ai-random.h"
@@ -570,6 +575,9 @@ void runGame(uint8_t numPlayers)
 		}
 		//return;
 		
+#ifdef TURN_DELAY
+		usleep(TURN_DELAY*1000);
+#endif
 		
 	}
 	
