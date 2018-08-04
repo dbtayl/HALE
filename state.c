@@ -228,7 +228,7 @@ static uint8_t getTileToPlay(GameState_t* gs)
 	makeSanitizedGameStateCopy(&gsSanitized, gs, currentPlayer);
 
 	//First, request a tile to be played from the current player
-	uint8_t tile = gs->players[currentPlayer].actions.playTile(&gsSanitized, currentPlayer);
+	uint8_t tile = gsSanitized.players[currentPlayer].actions.playTile(&gsSanitized, currentPlayer);
 	
 	//Validate that the tile is legal:
 	//-player had the tile in their hand
@@ -319,7 +319,7 @@ static HALE_status_t handleSharePurchasePhase(GameState_t* gs)
 
 	//Allow player to request a purchase
 	uint8_t buyRequest[NUM_CHAINS] = {0};
-	gs->players[currentPlayer].actions.buyStock(&gsSanitized, currentPlayer, buyRequest);
+	gsSanitized.players[currentPlayer].actions.buyStock(&gsSanitized, currentPlayer, buyRequest);
 	
 	//Validate that the purchase is valid:
 	//-the request is for no more than 3 shares (==SHARES_PER_TURN) total
@@ -418,7 +418,7 @@ static HALE_status_t handleEndGameQueryPhase(GameState_t* gs, uint8_t* endGame)
 	PRINT_MSG("FIXME: Check if making sanitized copy worked!");
 	makeSanitizedGameStateCopy(&gsSanitized, gs, gs->currentPlayer);
 	
-	uint8_t wantToEndGame = gs->players[gs->currentPlayer].actions.endGame(&gsSanitized, gs->currentPlayer);
+	uint8_t wantToEndGame = gsSanitized.players[gs->currentPlayer].actions.endGame(&gsSanitized, gs->currentPlayer);
 	
 	//Could/should probably just assign this directly, but want to keep all player actions completely
 	//separate from game
@@ -430,6 +430,81 @@ static HALE_status_t handleEndGameQueryPhase(GameState_t* gs, uint8_t* endGame)
 	return HALE_OK;
 }
 
+
+static HALE_status_t handleMerger(GameState_t* gs, chain_t survivingChain, chain_t mergedChain)
+{
+	//Hand out bonuses
+	for(int i = 0; i < gs->numPlayers; i++)
+	{
+		int32_t bonus = 0;
+		calculatePlayerBonus(gs, i, mergedChain, &bonus);
+		gs->players[i].cash += bonus;
+	}
+	
+	int32_t chainPrices[NUM_CHAINS];
+	getChainPricesPerShare(gs, chainPrices, NULL); //FIXME: Error checking
+	
+	//Starting with the current player (presumed to be the merge-maker), allow
+	//exchanging/selling stock
+	for(int i = 0; i < gs->numPlayers; i++)
+	{
+		//current player we're handling
+		uint8_t cp = (gs->currentPlayer + i) % gs->numPlayers;
+		
+		//Ask current player what they want to do
+		GameState_t gsSanitized;
+		makeSanitizedGameStateCopy(&gsSanitized, gs, gs->currentPlayer); //FIXME: Error checking
+		
+		uint8_t tradeFor = 0;
+		uint8_t sell = 0;
+		gsSanitized.players[cp].actions.mergerTrade(&gsSanitized, cp, survivingChain, mergedChain, &tradeFor, &sell);
+		
+		//Make sure that the request is valid
+		//Player must hold enough stocks to meet the trade/sell request,
+		//AND there must be enough remaining stocks of the surviving chain
+		//to fulfill the trade
+		if( ((2*tradeFor + sell) > gs->players[cp].stocks[mergedChain]) || (tradeFor > gs->remainingStocks[survivingChain]) )
+		{
+			//Invalid... not executing your trade.
+			PRINT_MSG_INT("Invalid trade request; ignoring. Player", cp);
+			continue;
+		}
+		
+		//If the trade is valid (which it must be at this point), execute
+		//Sale first
+		gs->players[cp].stocks[mergedChain] -= sell;
+		gs->remainingStocks[mergedChain] += sell;
+		gs->players[cp].cash += sell * chainPrices[mergedChain];
+		
+		//Then trade
+		gs->players[cp].stocks[mergedChain] -= 2*tradeFor;
+		gs->remainingStocks[mergedChain] += 2*tradeFor;
+		gs->players[cp].stocks[survivingChain] += tradeFor;
+		gs->remainingStocks[mergedChain] -= tradeFor;
+		
+#ifdef ENABLE_PARANOID_CHECKS
+		{
+			int8_t mergedStocks = gs->remainingStocks[mergedChain];
+			int8_t survivingStocks = gs->remainingStocks[survivingChain];
+			if( (mergedStocks > NUM_STOCKS) || (mergedStocks < 0) )
+			{
+				PRINT_MSG_INT("Ended up with too many/few merged stocks", mergedStocks);
+				PRINT_MSG_ARG("Chain", chainNames[mergedChain]);
+				HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
+			}
+			
+			if( (survivingStocks > NUM_STOCKS) || (survivingStocks < 0) )
+			{
+				PRINT_MSG_INT("Ended up with too many/few surviving stocks", survivingStocks);
+				PRINT_MSG_ARG("Chain", chainNames[survivingChain]);
+				HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
+			}
+		}
+#endif
+	}// for
+	
+	return HALE_OK;
+}
 
 void runGame(uint8_t numPlayers)
 {
