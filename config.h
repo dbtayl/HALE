@@ -15,6 +15,10 @@
 //that still has overhead)
 #define TURN_DELAY 1000
 
+//Uncomment to enable color printing of the game board
+//Annoying if redirecting to a file, but nice if looking on a terminal
+#define ENABLE_COLOR_BOARD_PRINT
+
 //Return values
 typedef enum	{	HALE_OK = 0,
 					HALE_FAIL,
