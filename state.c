@@ -26,35 +26,33 @@ static void initializeGameState(GameState_t* gs)
 	
 	//use a loop here instead of memset, since we might for some ungodly
 	//reason not use a single byte for each remaining stock in the future
-	int i;
-	for(i = 0; i < NUM_CHAINS; i++)
+	for(int i = 0; i < NUM_CHAINS; i++)
 	{
 		gs->remainingStocks[i] = NUM_STOCKS;
 	}
 	
 	//Ditto for each space on the board
-	for(i = 0; i < BOARD_TILES; i++)
+	for(int i = 0; i < BOARD_TILES; i++)
 	{
 		gs->board[i] = TILE_NULL;
 	}
 	
 	//Initialize and shuffle tiles
 	gs->remainingTiles = BOARD_TILES;
-	for(i = 0; i < BOARD_TILES; i++)
+	for(int i = 0; i < BOARD_TILES; i++)
 	{
 		gs->tilePool[i] = i;
 	}
 	shuffleTiles(gs->tilePool);
 	
 	//Initialize players (cash, stocks, tiles)
-	for(i = 0; i < MAX_PLAYERS; i++)
+	for(int i = 0; i < MAX_PLAYERS; i++)
 	{
 		gs->players[i].cash = STARTING_CASH;
 		
 		memset(gs->players[i].stocks, 0, sizeof(gs->players[i].stocks[0]) * NUM_CHAINS);
 		
-		int j;
-		for(j = 0; j < HAND_SIZE; j++)
+		for(int j = 0; j < HAND_SIZE; j++)
 		{
 			gs->players[i].tiles[j] = TILE_NULL;
 		}
@@ -84,8 +82,7 @@ static HALE_status_t configurePlayers(GameState_t* gs, uint8_t numPlayers)
 	//FIXME: Shim to allow us to continue...
 	PRINT_MSG("FIXME: Need real implementation; setting all random players as a shim");
 	
-	int i;
-	for(i = 0; i < numPlayers; i++)
+	for(int i = 0; i < numPlayers; i++)
 	{
 		gs->players[i].actions = randomActions;
 	}
@@ -109,10 +106,9 @@ static HALE_status_t dealInitialTiles(GameState_t* gs)
 	
 	HALE_status_t err_code = HALE_OK;
 	
-	int i, j;
-	for(i = 0; i < gs->numPlayers; i++)
+	for(int i = 0; i < gs->numPlayers; i++)
 	{
-		for(j = 0; j < HAND_SIZE; j++)
+		for(int j = 0; j < HAND_SIZE; j++)
 		{
 			err_code = dealTile(gs, i);
 			//We won't accept ANY errors in initial deal
@@ -136,8 +132,7 @@ static HALE_status_t placeInitialTiles(GameState_t* gs)
 	CHECK_NULL_PTR_FATAL(gs, "gs");
 	
 	HALE_status_t err_code = HALE_OK;
-	int i;
-	for(i = 0; i < gs->numPlayers; i++)
+	for(int i = 0; i < gs->numPlayers; i++)
 	{
 		uint8_t tile;
 		err_code = drawTile(gs, &tile);
@@ -189,8 +184,7 @@ HALE_status_t makeSanitizedGameStateCopy(GameState_t* newgs, GameState_t* gs, ui
 	memcpy(newgs->players, gs->players, sizeof(gs->players[0])*gs->numPlayers);
 	
 	//zero out the information you don't get
-	int i;
-	for(i = 0; i < gs->numPlayers; i++)
+	for(int i = 0; i < gs->numPlayers; i++)
 	{
 		//Don't zero out the player's own data
 		if(i != playerNum)
@@ -240,9 +234,8 @@ static uint8_t getTileToPlay(GameState_t* gs)
 	//-player had the tile in their hand
 	//-tile is a legal move on the board
 	uint8_t tileInHand = 0;
-	int i;
 	//Check if it's in their hand
-	for(i = 0; i < HAND_SIZE; i++)
+	for(int i = 0; i < HAND_SIZE; i++)
 	{
 		if(gs->players[currentPlayer].tiles[i] == tile)
 		{
@@ -261,7 +254,7 @@ static uint8_t getTileToPlay(GameState_t* gs)
 		//If the tile wasn't valid, too bad- all well-behavied players/AI
 		//code should ensure that it is BEFORE sending it to the game. Pick
 		//a tile from their hand for them and play that.
-		for(i = 0; i < HAND_SIZE; i++)
+		for(int i = 0; i < HAND_SIZE; i++)
 		{
 			tile = gs->players[currentPlayer].tiles[i];
 			if(isValidTilePlay(gs, tile))
@@ -279,7 +272,7 @@ static uint8_t getTileToPlay(GameState_t* gs)
 	}
 	
 	//Find the tile in the player's hand and remove it
-	for(i = 0; i < HAND_SIZE; i++)
+	for(int i = 0; i < HAND_SIZE; i++)
 	{
 		if(gs->players[currentPlayer].tiles[i] == tile)
 		{
@@ -338,9 +331,8 @@ static HALE_status_t handleSharePurchasePhase(GameState_t* gs)
 	
 	
 	//Ensure request is for no more than 3 (==SHARES_PER_TURN) shares total
-	int i;
 	int totalSharesRequested = 0;
-	for(i = 0; i < NUM_CHAINS; i++)
+	for(int i = 0; i < NUM_CHAINS; i++)
 	{
 		totalSharesRequested += buyRequest[i];
 	}
@@ -355,7 +347,7 @@ static HALE_status_t handleSharePurchasePhase(GameState_t* gs)
 	uint8_t chainSizes[NUM_CHAINS];
 	PRINT_MSG("FIXME: check return of getChainSizes");
 	getChainSizes(gs, chainSizes);
-	for(i = 0; i < NUM_CHAINS; i++)
+	for(int i = 0; i < NUM_CHAINS; i++)
 	{
 		if(buyRequest[i] && chainSizes[i] < 2)
 		{
@@ -366,7 +358,7 @@ static HALE_status_t handleSharePurchasePhase(GameState_t* gs)
 	
 	
 	//Ensure there are enough shares to fulfill the request
-	for(i = 0; i < NUM_CHAINS; i++)
+	for(int i = 0; i < NUM_CHAINS; i++)
 	{
 		if(buyRequest[i] > gs->remainingStocks[i])
 		{
@@ -382,7 +374,7 @@ static HALE_status_t handleSharePurchasePhase(GameState_t* gs)
 	PRINT_MSG("FIXME: check return of getChainPricesPerShare");
 	PRINT_MSG("FIXME: Should probably just make one call to getChainPricesPerShare and remove the explicit call to getChainSizes");
 	getChainPricesPerShare(gs, pricePerShare, NULL);
-	for(i = 0; i < NUM_CHAINS; i++)
+	for(int i = 0; i < NUM_CHAINS; i++)
 	{
 		totalCost += pricePerShare[i] * buyRequest[i];
 	}
@@ -399,7 +391,7 @@ static HALE_status_t handleSharePurchasePhase(GameState_t* gs)
 	{
 		gs->players[currentPlayer].cash -= totalCost;
 		PRINT_MSG("FIXME: Should probably have a generic function for modifying shares a player has, handling moving them between the pool and the player...");
-		for(i = 0; i < NUM_CHAINS; i++)
+		for(int i = 0; i < NUM_CHAINS; i++)
 		{
 			gs->players[currentPlayer].stocks[i] += buyRequest[i];
 			gs->remainingStocks[i] -= buyRequest[i];

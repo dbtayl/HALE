@@ -127,8 +127,7 @@ HALE_status_t shuffleTiles(uint8_t* tiles)
 {
 	CHECK_NULL_PTR_FATAL(tiles, "tiles");
 	
-	int i;
-	for(i = 0; i < BOARD_TILES; i++)
+	for(int i = 0; i < BOARD_TILES; i++)
 	{
 		int j = rand() % BOARD_TILES;
 		uint8_t tmp = tiles[i];
@@ -297,8 +296,7 @@ HALE_status_t getAdjacentSquares(GameState_t* gs, uint8_t tile, chain_t* adjacen
 	CHECK_NULL_PTR(adjacentSquares, "adjacentSquares");
 	
 	//Resolve to state of each square and count up how many uniqe tile types
-	int i;
-	for(i = 0; i < 4; i++)
+	for(int i = 0; i < 4; i++)
 	{
 		uint8_t idx = squareAdjacencies[tile][i];
 		adjacentSquares[i] = (idx == BOARD_NULL) ? CHAIN_EMPTY : gs->board[idx];
@@ -382,8 +380,7 @@ uint8_t isValidTilePlay(GameState_t* gs, uint8_t tile)
 		uint8_t legal = 0;
 		
 		//Check if any chain is of size 0
-		int i;
-		for(i = 0; i < NUM_CHAINS; i++)
+		for(int i = 0; i < NUM_CHAINS; i++)
 		{
 			if(sizes[i] == 0)
 			{
@@ -472,7 +469,6 @@ uint8_t wouldCreateChain(GameState_t* gs, uint8_t tile)
 	
 	//First, find out what tiles types are adjacent
 	//Get indices of board adjacent to tile: Up, left, right, down
-	int i;
 	uint8_t nonChainAdjacent = 0;
 	chain_t adj[4];
 	//FIXME: Check return value
@@ -480,7 +476,7 @@ uint8_t wouldCreateChain(GameState_t* gs, uint8_t tile)
 	
 	//Resolve to state of each square and check for adjacent tiles; if any
 	//chain tiles are adjacent, can return false immediately
-	for(i = 0; i < 4; i++)
+	for(int i = 0; i < 4; i++)
 	{
 		//We need at LEAST ONE non-chain tile adjacent to form a new chain
 		if(adj[i] == CHAIN_NONE)
@@ -509,8 +505,7 @@ HALE_status_t getChainSizes(GameState_t* gs, uint8_t* sizes)
 	memset(sizes, 0, NUM_CHAINS);
 	
 	//brute-force through the board to calculate chain sizes
-	int i;
-	for(i = 0; i < BOARD_TILES; i++)
+	for(int i = 0; i < BOARD_TILES; i++)
 	{
 		chain_t c = gs->board[i];
 		if(c < CHAIN_NONE)
@@ -559,9 +554,8 @@ HALE_status_t floodFillNonChain(GameState_t* gs, uint8_t tile)
 	//Initially populate the "check list" with the tile itself
 	squaresToCheck[checkIdx] = tile;
 	checkIdx++;
-	int i;
 	
-	for(i = 0; i < checkIdx; i++)
+	for(int i = 0; i < checkIdx; i++)
 	{
 		PRINT_MSG_INT("iterate", checkIdx);
 		tmpTile = squaresToCheck[i];
@@ -596,8 +590,7 @@ HALE_status_t floodFillNonChain(GameState_t* gs, uint8_t tile)
 				if( (tmpAdj != BOARD_NULL) && (gs->board[tmpAdj] != CHAIN_EMPTY) )
 				{
 					uint8_t add = 1;
-					int j;
-					for(j = 0; j < checkIdx; j++)
+					for(int j = 0; j < checkIdx; j++)
 					{
 						if(tmpAdj == squaresToCheck[j])
 						{
@@ -690,6 +683,9 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 		
 		
 		
+
+		
+		
 		
 		//remember to pass a COPY of gs!
 		GameState_t newgs;
@@ -706,8 +702,7 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 		//It will then get flood-filled as necessary
 		gs->board[tile] = CHAIN_NONE;
 		
-		int i;
-		for(i = 0; i < numMergingChains - 1; i++)
+		for(int i = 0; i < numMergingChains - 1; i++)
 		{
 			//FIXME: Need to handle mergers...
 			//Identify chain to keep (ask if necessary)
@@ -742,6 +737,7 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 		if(chainSizes[chainToCreate] > 0)
 		{
 			PRINT_MSG_INT("Requested to form invalid chain; picking one for them... requested", chainToCreate);
+			//NOTE: i defined external to loop because of paranoid check
 			int i;
 			for(i = 0; i < NUM_CHAINS; i++)
 			{
@@ -773,8 +769,7 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 		chain_t newType = CHAIN_NONE;
 		
 		//Figure out what chain this tile should be a part of
-		int i;
-		for(i = 0; i < 4; i++)
+		for(int i = 0; i < 4; i++)
 		{
 			if(adj[i] < CHAIN_NONE)
 			{
@@ -823,8 +818,7 @@ uint8_t canEndGame(GameState_t* gs)
 	getChainSizes(gs, chainSizes);
 	PRINT_MSG("FIXME: Should check if getChainSizes succeeded");
 	
-	int i;
-	for(i = 0; i < NUM_CHAINS; i++)
+	for(int i = 0; i < NUM_CHAINS; i++)
 	{
 		if(chainSizes[i] < SAFE_CHAIN_SIZE)
 		{

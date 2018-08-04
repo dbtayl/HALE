@@ -15,8 +15,7 @@ HALE_status_t giveTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 		return HALE_OOB;
 	}
 	
-	int i;
-	for(i = 0; i < HAND_SIZE; i++)
+	for(int i = 0; i < HAND_SIZE; i++)
 	{
 		if(gs->players[playerNum].tiles[i] == TILE_NULL)
 		{

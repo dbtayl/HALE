@@ -21,8 +21,7 @@ uint8_t randomPlayTile(GameState_t* gs, uint8_t playerNum)
 	uint8_t playableTiles[HAND_SIZE] = {TILE_NULL};
 	
 	//Get list of valid plays
-	int i;
-	for(i = 0; i < HAND_SIZE; i++)
+	for(int i = 0; i < HAND_SIZE; i++)
 	{
 		uint8_t tile = gs->players[playerNum].tiles[i];
 		
@@ -76,8 +75,7 @@ chain_t randomFormChain(GameState_t* gs, uint8_t playerNum)
 	//Get the list of valid chains
 	chain_t validChains[NUM_CHAINS];
 	int numValid = 0;
-	int i;
-	for(i = 0; i < NUM_CHAINS; i++)
+	for(int i = 0; i < NUM_CHAINS; i++)
 	{
 		if(chainSizes[i] == 0)
 		{
@@ -130,8 +128,7 @@ void randomBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy)
 	
 	getChainPricesPerShare(gs, prices, chainSizes);
 	
-	int i;
-	for(i = 0; i < NUM_CHAINS; i++)
+	for(int i = 0; i < NUM_CHAINS; i++)
 	{
 		//Might as well zero out the toBuy array for good measure
 		toBuy[i] = 0;
@@ -167,7 +164,7 @@ void randomBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy)
 	//For each share we want to buy, pick a random chain and try to
 	//buy it- if we can no longer afford it, look through the rest of
 	//the chains and try to buy one of those instead.
-	for(i = 0; i < numWantToBuy; i++)
+	for(int i = 0; i < numWantToBuy; i++)
 	{
 		uint8_t tryToBuy = rand() % numOptions;
 		
@@ -183,8 +180,7 @@ void randomBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy)
 		//Otherwise, see if any of the others work
 		else
 		{
-			int j;
-			for(j = (tryToBuy + 1) % numOptions; j != tryToBuy; j = (j + 1) % numOptions)
+			for(int j = (tryToBuy + 1) % numOptions; j != tryToBuy; j = (j + 1) % numOptions)
 			{
 				if( (prices[options[j]] < cash) && (numCanBuy[options[j]] > 0) )
 				{
