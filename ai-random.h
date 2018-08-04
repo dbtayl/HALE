@@ -23,6 +23,8 @@ chain_t randomFormChain(GameState_t* gs, uint8_t playerNum);
 
 chain_t randomMergerSurvivor(GameState_t* gs, uint8_t playerNum, uint8_t* options);
 
+void randomMergerOrder(GameState_t* gs, uint8_t playerNum, chain_t survivor, uint8_t* options);
+
 void randomBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy);
 
 void randomMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t merged, uint8_t* tradeFor, uint8_t* sell);

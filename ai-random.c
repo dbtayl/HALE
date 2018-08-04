@@ -9,6 +9,7 @@
 PlayerActions_t randomActions = {	.playTile = randomPlayTile,
 					.formChain = randomFormChain,
 					.mergerSurvivor = randomMergerSurvivor,
+					.mergerOrder = randomMergerOrder,
 					.buyStock = randomBuyStock,
 					.mergerTrade = randomMergerTrade,
 					.endGame = randomEndGame
@@ -114,6 +115,41 @@ chain_t randomMergerSurvivor(GameState_t* gs, uint8_t playerNum, uint8_t* option
 		}
 	}
 	return condensedOptions[rand() % numOptions];
+}
+
+
+void randomMergerOrder(GameState_t* gs, uint8_t playerNum, chain_t survivor, uint8_t* options)
+{
+	//at most 3 chains can be in this list- the fourth possible is
+	//already listed as the survivor
+	//Indices of options we can order
+	uint8_t optionIdx[3] = {};
+	uint8_t numOptions = 0;
+	
+	for(int i = 0; i < NUM_CHAINS; i++)
+	{
+		if(options[i] < 0xFF) //FIXME: Magic numbers
+		{
+			optionIdx[numOptions] = i;
+			numOptions++;
+		}
+	}
+	
+	//Now do a lazy shuffle- just swap indices once each with a random
+	//different index
+	for(int i = 0; i < numOptions; i++)
+	{
+		uint8_t swap = rand() % numOptions;
+		uint8_t tmp = optionIdx[i];
+		optionIdx[i] = optionIdx[swap];
+		optionIdx[swap] = tmp;
+	}
+	
+	//And write the new indices back
+	for(int i = 0; i < numOptions; i++)
+	{
+		options[optionIdx[i]] = i;
+	}
 }
 
 
