@@ -10,6 +10,7 @@
 	//uint8_t (*playTile)(GameState_t* gs, uint8_t playerNum);
 	//chain_t (*formChain)(GameState_t* gs, uint8_t playerNum);
 	//chain_t (*mergerSurvivor)(GameState_t* gs, uint8_t playerNum, uint8_t* options);
+	//void (*mergerOrder)(GameState_t* gs, uint8_t playerNum, chain_t survivor, uint8_t* options);
 	//void (*buyStock)(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy);
 	//void (*mergerTrade)(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t merged, uint8_t* tradeFor, uint8_t* sell);
 	//uint8_t (*endGame)(GameState_t* gs, uint8_t playerNum);
@@ -40,6 +41,16 @@
  * list of chains that may be selected from (NUM_CHAINS size array). One
  * of those (indices) must be returned.
  */
+ 
+ /* void (*mergerOrder)(GameState_t* gs, uint8_t playerNum, chain_t survivor, uint8_t* options);
+  * 
+  * Called in the event that a merger involves 3 or more chains, and the
+  * player needs to decide which order to merge them in. <survivor> will
+  * already be specified, and <options> will contain a default ordering.
+  * Chains not involved in the merger will be assigned a value of 0xFF; the
+  * involved chains will be numbered 0-(n-1). This variable should be manipulated
+  * to number those chains, with the lowest number being merged first.
+  */
 
 
 /* void (*buyStock)(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy);
