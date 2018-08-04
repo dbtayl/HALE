@@ -680,39 +680,124 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 		
 		//No matter what you do, you'll need the largest chain/final
 		//surviving chain- might as well do that first.
+		uint8_t largest[NUM_CHAINS]; //entries set to 1 if largest, 0 otherwise
+		uint8_t numLargest = 0;
+		uint8_t sizeLargest = 0;
 		
-		
-		
-
-		
-		
-		
-		//remember to pass a COPY of gs!
-		GameState_t newgs;
-		err_code = makeSanitizedGameStateCopy(&newgs, gs, playerNum);
-		if(err_code != HALE_OK)
+		//First, find the largest chain that's merging
+		for(int i = 0; i < NUM_CHAINS; i++)
 		{
-			PRINT_MSG("Couldn't create sanitized state for handling merger");
-			return err_code;
+			if( (mergingChains[i]) && (chainSizes[i] > sizeLargest) )
+			{
+				sizeLargest = chainSizes[i];
+			}
 		}
-		PRINT_MSG("FIXME: Need to request merger order from player");
-		PRINT_MSG("FIXME: Shim! Just merge in order...");
-		
-		//Before merger, place tile on board
-		//It will then get flood-filled as necessary
-		gs->board[tile] = CHAIN_NONE;
-		
-		for(int i = 0; i < numMergingChains - 1; i++)
+#ifdef ENABLE_PARANOID_CHECKS
+		//Check if our largest size is valid
+		if(sizeLargest < 2)
 		{
-			//FIXME: Need to handle mergers...
-			//Identify chain to keep (ask if necessary)
-				//Somewhere we need to update that original tile...
-			//Pay out bonuses
-			//Handle stock trades/sales
-			//Update board state
-			PRINT_MSG("FIXME: Probably call a different function to handle mergers");
+			printf("Merger, but invalid largest chain size\r\n");
+			HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
+		}
+#endif
+		
+		//Then check every chain that's merging against this size
+		for(int i = 0; i < NUM_CHAINS; i++)
+		{
+			if( (mergingChains[i]) && (chainSizes[i] == sizeLargest) )
+			{
+				numLargest++;
+				largest[i] = 1;
+			}
+		}
+#ifdef ENABLE_PARANOID_CHECKS
+		//Check if our largest size is valid
+		if(numLargest < 1)
+		{
+			printf("No chain matches the size of the largest chain involved in the merger!\r\n");
+			HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
+		}
+#endif
+		
+		//Now, IF there's a tie for the largest, need to pick which
+		//chain survives
+		chain_t survivingChain = CHAIN_NONE;
+		if(numLargest > 1)
+		{
+			//Need to make duplicates of the game state and the options array, to they can't be messed with
+			GameState_t newgs;
+			err_code = makeSanitizedGameStateCopy(&newgs, gs, playerNum);
+			if(err_code != HALE_OK)
+			{
+				PRINT_MSG("Couldn't create sanitized state for asking merger survivor");
+				return err_code;
+			}
+			
+			uint8_t dupLargest[NUM_CHAINS];
+			memcpy((void*)dupLargest, (void*)largest, NUM_CHAINS);
+			
+			survivingChain = gs->players[playerNum].actions.mergerSurvivor(&newgs, playerNum, dupLargest);
+			
+			//Verify the player didn't ask for something invalid
+			if(!largest[survivingChain])
+			{
+				survivingChain = CHAIN_NONE;
+				PRINT_MSG("Player requested invalid surviving chain- picking for them!\r\n");
+				//We do this by falling through, which will then pick the first ("only", nominally) "largest" chain and roll with that
+				//FIXME: This biases the game towards choosing to always keep the cheaper chains... but the AI could do that anyway if its what it wanted
+			}
+		}
+		//If we don't have a valid survivor request here, either
+		//there's only ONE largest chain (and no decision to make),
+		//or the player screwed up, and we'll choose for them by
+		//picking the first "largest" we find.
+		if(survivingChain == CHAIN_NONE)
+		{
+			for(int i = 0; i < NUM_CHAINS; i++)
+			{
+				if(largest[i])
+				{
+					survivingChain = i;
+					break;
+				}
+			}
+		}
+#ifdef ENABLE_PARANOID_CHECKS
+		if(!largest[survivingChain])
+		{
+			printf("Just ensured we had a valid survivor for the merger, but no longer do!\r\n");
+			HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
+		}
+#endif
+		
+		//We now know which chain ultimately survives, but may need
+		//to handle multiple mergers in a player-selected order-
+		//get that order, if necessary
+		//Determine order of merger(s), if necessary
+		//FIXME
+		//Need:
+		//-Final survivor (chain_t)- DONE
+		//-One-hot array of chains to merge (not including survivor)
+		//LOWEST order gets merged FIRST
+		uint8_t order[NUM_CHAINS];
+		
+		//Set default order
+		memset(order, 0xff, NUM_CHAINS);
+		uint8_t currentOrder = 0;
+		for(int i = 0; i < NUM_CHAINS; i++)
+		{
+			//If this chain is supposed to merge, AND it's not the survivor, mark it
+			if( (mergingChains[i]) && (i != mergerSurvivor) )
+			{
+				order[i] = currentOrder;
+				currentOrder++;
+			}
 		}
 		
+		if(numMergingChains > 2)
+		{
+			//FIXME: Ask player about order of mergers
+		}
 		
 	}
 	//Need to make a new chain
