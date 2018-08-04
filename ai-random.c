@@ -99,10 +99,21 @@ chain_t randomFormChain(GameState_t* gs, uint8_t playerNum)
 }
 
 
-chain_t randomMergerSurvivor(GameState_t* gs, uint8_t playerNum, uint8_t numOptions, chain_t* options)
+chain_t randomMergerSurvivor(GameState_t* gs, uint8_t playerNum, uint8_t* options)
 {
 	//Easy- just pick one of the provided options at random
-	return options[rand() % numOptions];
+	//...but first need to enumerate those options nicely
+	chain_t condensedOptions[NUM_CHAINS]; //overkill in size, but hey
+	uint8_t numOptions = 0;
+	for(int i = 0; i < NUM_CHAINS; i++)
+	{
+		if(options[i])
+		{
+			condensedOptions[numOptions] = i;
+			numOptions++;
+		}
+	}
+	return condensedOptions[rand() % numOptions];
 }
 
 

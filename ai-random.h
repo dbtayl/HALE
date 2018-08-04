@@ -21,7 +21,7 @@ uint8_t randomPlayTile(GameState_t* gs, uint8_t playerNum);
 
 chain_t randomFormChain(GameState_t* gs, uint8_t playerNum);
 
-chain_t randomMergerSurvivor(GameState_t* gs, uint8_t playerNum, uint8_t numOptions, chain_t* options);
+chain_t randomMergerSurvivor(GameState_t* gs, uint8_t playerNum, uint8_t* options);
 
 void randomBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy);
 

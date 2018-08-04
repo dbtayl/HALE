@@ -13,7 +13,7 @@ typedef struct
 {
 	uint8_t (*playTile)(GameState_t* gs, uint8_t playerNum);
 	chain_t (*formChain)(GameState_t* gs, uint8_t playerNum);
-	chain_t (*mergerSurvivor)(GameState_t* gs, uint8_t playerNum, uint8_t numOptions, chain_t* options);
+	chain_t (*mergerSurvivor)(GameState_t* gs, uint8_t playerNum, uint8_t* options);
 	void (*buyStock)(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy);
 	void (*mergerTrade)(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t merged, uint8_t* tradeFor, uint8_t* sell);
 	uint8_t (*endGame)(GameState_t* gs, uint8_t playerNum);
