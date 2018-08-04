@@ -43,4 +43,20 @@ extern const char* chainConsoleColors[];
 //This is calculated anyway, so it might as well be exposed here.
 HALE_status_t getChainPricesPerShare(GameState_t* gs, int32_t* prices, uint8_t* sizesOut);
 
+
+//Returns the bonuses for shareholders
+//If <prices> is not NULL, it will be used to calculate the bonuses and save some computation
+//Otherwise, getChainPricesPerShare will be used to do that first
+HALE_status_t getChainBonuses(GameState_t* gs, int32_t* prices, int32_t* majBonus, int32_t* minBonus);
+
+
+//Calculates the player's bonus for a given chain
+//Could totally be zero
+//Player bonus is as follows:
+//One majority, one minority holder: Each gets full bonus (10x, 5x, respectively)
+//Two+ majority holders: Split sum of majority and minority bonuses (15x total) between them, minority holder(s) get nothing
+//One majority, two plus minority: Majority gets full bonus (10x), minority splits
+HALE_status_t calculatePlayerBonus(GameState_t* gs, uint8_t playerNum, chain_t chain, int32_t* bonus);
+
+
 #endif

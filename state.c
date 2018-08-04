@@ -571,13 +571,35 @@ void runGame(uint8_t numPlayers)
 		usleep(TURN_DELAY*1000);
 #endif
 		
-	}
+	} //while !gameover
 	
 	//Now that the game is over, display relevant statistics:
 	//-winner
 	//-holdings of each player (each stock type, cash)
 	//-total value of each player (bonuses + holdings + cash)
 	//-Player type/name
-	PRINT_MSG("FIXME: Should display a game postmortum here");
+	
+	PRINT_MSG("\r\nEND OF GAME");
+	PRINT_MSG("FIXME: handle ties!");
+	uint8_t winner = 0;
+	int32_t winningValue = 0;
+	for(int i = 0; i < gs.numPlayers; i++)
+	{
+		int32_t tmpVal;
+		calculatePlayerValue(&gs, i, &tmpVal);
+		if(tmpVal > winningValue)
+		{
+			winner = i;
+			winningValue = tmpVal;
+		}
+	}
+	
+	PRINT_MSG_INT("Winner is player", winner);
+	PRINT_MSG_INT("Winning value", winningValue);
+	
 	printGameBoard(&gs);
+	for(int i = 0; i < gs.numPlayers; i++)
+	{
+		printPlayer(&gs, i);
+	}
 }

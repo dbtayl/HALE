@@ -4,6 +4,7 @@
 #include "player.h"
 #include "state.h"
 #include "util.h"
+#include "chain.h"
 
 HALE_status_t giveTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 {
@@ -41,11 +42,27 @@ HALE_status_t calculatePlayerValue(GameState_t* gs, uint8_t playerNum, int32_t* 
 		return HALE_OOB;
 	}
 	
+	//Base value is just cash
 	Player_t* p = &(gs->players[playerNum]);
 	*val = p->cash;
 	
-	PRINT_MSG("FIXME: Need to finish calculating the player's value");
-	HANDLE_UNRECOVERABLE_ERROR(HALE_FUNC_NOT_IMPLEMENTED);
+	//Plus value of any held stock
+	int32_t sharePrices[NUM_CHAINS];
+	uint8_t chainSizes[NUM_CHAINS];
+	getChainPricesPerShare(gs, sharePrices, chainSizes); //FIXME: Error checking
+	
+	for(int i = 0; i < NUM_CHAINS; i++)
+	{
+		*val += p->stocks[i] * sharePrices[i];
+	}
+	
+	//Get all bonuses
+	for(int i = 0; i < NUM_CHAINS; i++)
+	{
+		int32_t bonus;
+		calculatePlayerBonus(gs, playerNum, i, &bonus); //FIXME: Error checking
+		*val += bonus;
+	}
 
 	return HALE_OK;
 }
@@ -67,4 +84,8 @@ void printPlayer(GameState_t* gs, uint8_t playerNum)
 		fprintf(stdout, "%d ", player->stocks[i]);
 	}
 	fprintf(stdout, "\n");
+	
+	int32_t totalValue;
+	calculatePlayerValue(gs, playerNum, &totalValue);
+	fprintf(stdout, "Total value: $%d\n", totalValue);
 }
