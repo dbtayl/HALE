@@ -334,7 +334,7 @@ uint8_t isValidTilePlay(GameState_t* gs, uint8_t tile)
 		return 0;
 	}
 	
-	chain_t mergingChains[4];
+	chain_t mergingChains[NUM_CHAINS];
 	uint8_t numMergingChains;
 	uint8_t merge = wouldCauseMerger(gs, tile, &numMergingChains, mergingChains);
 	uint8_t create = wouldCreateChain(gs, tile);
@@ -355,10 +355,12 @@ uint8_t isValidTilePlay(GameState_t* gs, uint8_t tile)
 	{
 		//Can only be illegal if trying to merge two or more safe chains
 		uint8_t safeCount = 0;
-		int i;
-		for(i = 0; i < numMergingChains; i++)
+		//Look through ALL chains, due to one-hot encoding of mergingChains.
+		//Could also add a check for < numMergingChains, but probably not worth the overhead
+		for(int i = 0; i < NUM_CHAINS; i++)
 		{
-			if(sizes[mergingChains[i]] >= SAFE_CHAIN_SIZE)
+			//If this chain is merging AND it's safe, record it
+			if( (mergingChains[i]) && (sizes[i] >= SAFE_CHAIN_SIZE) )
 			{
 				safeCount++;
 			}
@@ -427,8 +429,9 @@ uint8_t wouldCauseMerger(GameState_t* gs, uint8_t tile, uint8_t* numMergingChain
 	CHECK_NULL_PTR(numMergingChains, "numMergingChains");
 	CHECK_NULL_PTR(mergingChains, "mergingChains");
 	
-	//Step 0: Zero out the count of merging chains
+	//Step 0: Zero out the count of merging chains and the array returned
 	*numMergingChains = 0;
+	memset((void*)mergingChains, 0, NUM_CHAINS * sizeof(chain_t));
 	
 	//Step 1: Check what the squares around the proposed play location
 	//contain
@@ -436,28 +439,16 @@ uint8_t wouldCauseMerger(GameState_t* gs, uint8_t tile, uint8_t* numMergingChain
 	getAdjacentSquares(gs, tile, adj);
 	
 	//Step 2: see if there's more than one chain contained in that set
-	int i;
-	for(i = 0; i < 4; i++)
+	for(int i = 0; i < 4; i++)
 	{
 		//for each chain, check if it matches one of the already-recorded chains...
 		if(adj[i] < CHAIN_NONE)
 		{
-			int j;
-			uint8_t dup = 0;
-			for(j = 0; j < *numMergingChains; j++)
-			{
-				if(adj[i] == mergingChains[j])
-				{
-					dup = 1;
-				}
-			}
+			//Add to the merging chains count if we haven't already found this one
+			*numMergingChains += mergingChains[adj[i]] ? 0 : 1;
 			
-			//...if not, record it
-			if(!dup)
-			{
-				mergingChains[*numMergingChains] = adj[i];
-				*numMergingChains = (*numMergingChains) + 1;
-			}
+			//Record this chain regardless- no need to worry about clobbering
+			mergingChains[adj[i]] = 1;
 		} //if(adj[u[ < CHAIN_NONE)
 	}//for(i = 0; i < 4; i++)
 	
@@ -664,7 +655,7 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 	}
 	
 	uint8_t numMergingChains = 0;
-	chain_t mergingChains[NUM_CHAINS]; //FIXME: Technically only 4 chains could merge at once, so this is overkill
+	chain_t mergingChains[NUM_CHAINS];
 	uint8_t merger = wouldCauseMerger(gs, tile, &numMergingChains, mergingChains);
 	uint8_t create = wouldCreateChain(gs, tile);
 	
@@ -681,6 +672,25 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 	if(merger)
 	{
 		PRINT_MSG_INT("Tile would cause merger", tile);
+		
+		
+		//If this is simple, it's two chains, one larger than the other
+		//More complicated: Tied for size, have to ask
+		//More complicated yet: Three- or four-way merger (ordering)
+		
+		//Eventually, ALL tiles involved will be the same type- can change that at the end
+		
+		//First, get the CURRENT size of all chains- that's what's
+		//used to determine bonuses and whatnot
+		uint8_t chainSizes[NUM_CHAINS];
+		getChainSizes(gs, chainSizes);
+		
+		//No matter what you do, you'll need the largest chain/final
+		//surviving chain- might as well do that first.
+		
+		
+		
+		
 		//remember to pass a COPY of gs!
 		GameState_t newgs;
 		err_code = makeSanitizedGameStateCopy(&newgs, gs, playerNum);
@@ -691,10 +701,20 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 		}
 		PRINT_MSG("FIXME: Need to request merger order from player");
 		PRINT_MSG("FIXME: Shim! Just merge in order...");
+		
+		//Before merger, place tile on board
+		//It will then get flood-filled as necessary
+		gs->board[tile] = CHAIN_NONE;
+		
 		int i;
 		for(i = 0; i < numMergingChains - 1; i++)
 		{
 			//FIXME: Need to handle mergers...
+			//Identify chain to keep (ask if necessary)
+				//Somewhere we need to update that original tile...
+			//Pay out bonuses
+			//Handle stock trades/sales
+			//Update board state
 			PRINT_MSG("FIXME: Probably call a different function to handle mergers");
 		}
 		

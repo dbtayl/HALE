@@ -45,7 +45,8 @@ uint8_t getNumValidTiles(GameState_t* gs, uint8_t playerNum);
 //If not NULL, <numMergingChains> will be filled in with the number of chains
 //that would be involved in a potential merger
 //If not NULL, <mergingChains> will be filled in with the names of the chains
-//that would be involved
+//that would be involved- note that <mergingChains> must be NUM_CHAINS in size-
+//one-hot encoding!
 //Note that this does NOT tell you if a merger would actually be legal!
 uint8_t wouldCauseMerger(GameState_t* gs, uint8_t tile, uint8_t* numMergingChains, chain_t* mergingChains);
 

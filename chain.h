@@ -18,6 +18,9 @@ typedef struct GameState_s GameState_t;
 
 //None indicates a tile is in place, but not part of a chain
 //empty indicates no tile is in place
+//It would in some ways be convenient to be able to bitmask these, but
+//they're used as indices into arrays, so... not right now.
+//Plus, that would require each to be two bytes.
 typedef enum 	{	CHAIN_LUXOR = 0,
 					CHAIN_TOWER,
 					CHAIN_WORLDWIDE,
