@@ -48,7 +48,7 @@ uint8_t randomPlayTile(GameState_t* gs, uint8_t playerNum)
 		HANDLE_UNRECOVERABLE_ERROR(HALE_AI_BADSTATE);
 	}
 	
-	PRINT_MSG_INT("Have this many tiles to choose from: ", numPlayable);
+	PRINT_MSG_INT("Have this many tiles to choose from", numPlayable);
 	
 	uint8_t playThisTile = rand() % numPlayable;
 	
@@ -73,7 +73,7 @@ chain_t randomFormChain(GameState_t* gs, uint8_t playerNum)
 	getChainSizes(gs, chainSizes);
 	
 	//Get the list of valid chains
-	chain_t validChains[NUM_CHAINS];
+	chain_t validChains[NUM_CHAINS] = {};
 	int numValid = 0;
 	for(int i = 0; i < NUM_CHAINS; i++)
 	{
@@ -103,7 +103,7 @@ chain_t randomMergerSurvivor(GameState_t* gs, uint8_t playerNum, uint8_t* option
 {
 	//Easy- just pick one of the provided options at random
 	//...but first need to enumerate those options nicely
-	chain_t condensedOptions[NUM_CHAINS]; //overkill in size, but hey
+	chain_t condensedOptions[NUM_CHAINS] = {}; //overkill in size, but hey
 	uint8_t numOptions = 0;
 	for(int i = 0; i < NUM_CHAINS; i++)
 	{
@@ -125,17 +125,17 @@ void randomBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy)
 	//And how many different chains can be bought
 	int numOptions = 0;
 	
-	chain_t options[NUM_CHAINS];
+	chain_t options[NUM_CHAINS] = {};
 	
 	//This will contain the prices for ALL of the chains- so it can
 	//be indexed by a chain_t
-	int32_t prices[NUM_CHAINS];
+	int32_t prices[NUM_CHAINS] = {};
 	
 	//shortcut instead of having to type out the whole thing
 	//Also subtract from this as we "buy" stocks to keep track of whether
 	//we can buy others
 	int32_t cash = gs->players[playerNum].cash;
-	uint8_t chainSizes[NUM_CHAINS];
+	uint8_t chainSizes[NUM_CHAINS] = {};
 	
 	getChainPricesPerShare(gs, prices, chainSizes);
 	

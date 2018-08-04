@@ -332,7 +332,7 @@ uint8_t isValidTilePlay(GameState_t* gs, uint8_t tile)
 		return 0;
 	}
 	
-	chain_t mergingChains[NUM_CHAINS];
+	chain_t mergingChains[NUM_CHAINS] = {};
 	uint8_t numMergingChains;
 	uint8_t merge = wouldCauseMerger(gs, tile, &numMergingChains, mergingChains);
 	uint8_t create = wouldCreateChain(gs, tile);
@@ -557,7 +557,6 @@ HALE_status_t floodFillNonChain(GameState_t* gs, uint8_t tile)
 	
 	for(int i = 0; i < checkIdx; i++)
 	{
-		PRINT_MSG_INT("iterate", checkIdx);
 		tmpTile = squaresToCheck[i];
 #ifndef GO_FAST_AND_BREAK_THINGS
 		//If we're trying to flood-fill next to a DIFFERENT chain,
@@ -582,8 +581,7 @@ HALE_status_t floodFillNonChain(GameState_t* gs, uint8_t tile)
 			gs->board[tmpTile] = gs->board[tile];
 			
 			//Check adjacent tiles
-			int k;
-			for(k = 0; k < 4; k++)
+			for(int k = 0; k < 4; k++)
 			{
 				//Check if the tile was already on the list
 				uint8_t tmpAdj = squareAdjacencies[tmpTile][k];
@@ -648,7 +646,7 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 	}
 	
 	uint8_t numMergingChains = 0;
-	chain_t mergingChains[NUM_CHAINS];
+	chain_t mergingChains[NUM_CHAINS] = {};
 	uint8_t merger = wouldCauseMerger(gs, tile, &numMergingChains, mergingChains);
 	uint8_t create = wouldCreateChain(gs, tile);
 	
@@ -680,7 +678,7 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 		
 		//No matter what you do, you'll need the largest chain/final
 		//surviving chain- might as well do that first.
-		uint8_t largest[NUM_CHAINS]; //entries set to 1 if largest, 0 otherwise
+		uint8_t largest[NUM_CHAINS] = {}; //entries set to 1 if largest, 0 otherwise
 		uint8_t numLargest = 0;
 		uint8_t sizeLargest = 0;
 		
@@ -690,14 +688,23 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 			if( (mergingChains[i]) && (chainSizes[i] > sizeLargest) )
 			{
 				sizeLargest = chainSizes[i];
+				PRINT_MSG_INT("Largest so far", sizeLargest);
 			}
 		}
 #ifdef ENABLE_PARANOID_CHECKS
 		//Check if our largest size is valid
 		if(sizeLargest < 2)
 		{
-			printf("Merger, but invalid largest chain size\r\n");
+			PRINT_MSG("Merger, but invalid largest chain size\r\n");
 			HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
+		}
+		for(int i = 0; i < NUM_CHAINS; i++)
+		{
+			if( (mergingChains[i]) && (chainSizes[i] > sizeLargest) )
+			{
+				PRINT_MSG("Found a chain in the merger larger than the largest!");
+				HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
+			}
 		}
 #endif
 		
@@ -710,11 +717,12 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 				largest[i] = 1;
 			}
 		}
+		PRINT_MSG_INT("Got this many chains of largest size", numLargest);
 #ifdef ENABLE_PARANOID_CHECKS
 		//Check if our largest size is valid
 		if(numLargest < 1)
 		{
-			printf("No chain matches the size of the largest chain involved in the merger!\r\n");
+			PRINT_MSG("No chain matches the size of the largest chain involved in the merger!\r\n");
 			HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
 		}
 #endif
@@ -753,6 +761,7 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 		//picking the first "largest" we find.
 		if(survivingChain == CHAIN_NONE)
 		{
+			PRINT_MSG("Only one largest, or player screwed up");
 			for(int i = 0; i < NUM_CHAINS; i++)
 			{
 				if(largest[i])
@@ -762,10 +771,17 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 				}
 			}
 		}
+		
+		PRINT_MSG_ARG("Surviving chain", chainNames[survivingChain]);
 #ifdef ENABLE_PARANOID_CHECKS
 		if(!largest[survivingChain])
 		{
-			printf("Just ensured we had a valid survivor for the merger, but no longer do!\r\n");
+			PRINT_MSG("Just ensured we had a valid survivor for the merger, but no longer do!\r\n");
+			HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
+		}
+		if(!mergingChains[survivingChain])
+		{
+			PRINT_MSG("Supposed survivor wasn't merging in the first place!\r\n");
 			HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
 		}
 #endif
@@ -787,7 +803,7 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 		for(int i = 0; i < NUM_CHAINS; i++)
 		{
 			//If this chain is supposed to merge, AND it's not the survivor, mark it
-			if( (mergingChains[i]) && (i != mergerSurvivor) )
+			if( (mergingChains[i]) && (i != survivingChain) )
 			{
 				order[i] = currentOrder;
 				currentOrder++;
@@ -797,7 +813,54 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 		if(numMergingChains > 2)
 		{
 			//FIXME: Ask player about order of mergers
+			printf("FIXME: Need to implement player functions for deciding merger order!\r\n");
+			HANDLE_UNRECOVERABLE_ERROR(HALE_FUNC_NOT_IMPLEMENTED);
 		}
+		
+		//FIXME: Add paranoid check to verify order is OK
+		
+		//Actually handle the mergers
+		for(int i = 0; i < numMergingChains - 1; i++)
+		{
+			//We already know which chain we're merging with- need to pick out the one we're merging
+			//That's the lowest-numbered chain in <order>
+			chain_t merge = 0;
+			for(int j = 1; j < NUM_CHAINS; j++)
+			{
+				if(order[j] < order[merge])
+				{
+					merge = j;
+				}
+			}
+			//We've got the chain to merge, take it off the list
+			order[merge] = 0xff;
+			
+			//FIXME: Handle merger
+		}
+		
+		//FIXME: We've merged everything, and presumably handled stocks and money
+		//Now need to update the board
+		//Place the one tile on the board as the final chain type
+		gs->board[tile] = survivingChain;
+		//Iterate through every tile; if one of the merged chains, update to new chain
+		for(int i = 0; i < BOARD_TILES; i++)
+		{
+			for(int j = 0; j < NUM_CHAINS; j++)
+			{
+				if( (gs->board[i] < CHAIN_NONE) && (mergingChains[gs->board[i]]) )
+				{
+					gs->board[i] = survivingChain;
+					break;
+				}
+			}
+		}
+		//Remember there may be non-chain tiles attached! Do a flood-fill on placed tile to clean any of those up
+		floodFillNonChain(gs, tile);
+		
+		//FIXME: Remove
+		printf("DEBUGGING\r\n");
+		printGameBoard(gs);
+		printf("DEBUGGING\r\n");
 		
 	}
 	//Need to make a new chain
@@ -879,11 +942,6 @@ HALE_status_t playTile(GameState_t* gs, uint8_t tile, uint8_t playerNum)
 			}
 		}
 	}
-	
-	PRINT_MSG("FIXME: Need to update the board, based on mergers and stuff?");
-	
-	//FIXME
-	//HANDLE_UNRECOVERABLE_ERROR(HALE_FUNC_NOT_IMPLEMENTED);
 	
 	return err_code;
 }
