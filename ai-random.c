@@ -144,7 +144,6 @@ void randomMergerOrder(GameState_t* gs, uint8_t playerNum, chain_t survivor, uin
 		optionIdx[i] = optionIdx[swap];
 		optionIdx[swap] = tmp;
 	}
-	
 	//And write the new indices back
 	for(int i = 0; i < numOptions; i++)
 	{
