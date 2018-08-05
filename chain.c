@@ -210,6 +210,7 @@ HALE_status_t calculatePlayerBonus(GameState_t* gs, uint8_t playerNum, chain_t c
 
 uint8_t mergerOrderIsValid(GameState_t* gs, uint8_t tile, chain_t survivingChain, uint8_t* order)
 {
+	PRINT_MSG("FIXME: Not sure if this function is done or not...");
 	//Return invalid if inputs are bad
 	if(gs == NULL)
 	{
@@ -263,12 +264,6 @@ uint8_t mergerOrderIsValid(GameState_t* gs, uint8_t tile, chain_t survivingChain
 		}
 
 	}// for(i)
-	
-	
-	
-	
-	HANDLE_UNRECOVERABLE_ERROR(HALE_FUNC_NOT_IMPLEMENTED);
-	
 	
 	
 	//-No duplicate order entries (aside from 0xFF)

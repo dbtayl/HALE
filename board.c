@@ -646,7 +646,8 @@ uint8_t canEndGame(GameState_t* gs)
 	
 	for(int i = 0; i < NUM_CHAINS; i++)
 	{
-		if(chainSizes[i] < SAFE_CHAIN_SIZE)
+		//Chain must be present AND safe- doesn't count if it's not on board
+		if( (chainSizes[i] < SAFE_CHAIN_SIZE) && (chainSizes[i] > 2) )
 		{
 			allChainsSafe = 0;
 		}
