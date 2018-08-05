@@ -13,6 +13,7 @@
 
 //FIXME: Should probably have a better way of doing this
 #include "ai-random.h"
+#include "ai-greedy.h"
 
 
 static void initializeGameState(GameState_t* gs)
@@ -82,10 +83,13 @@ static HALE_status_t configurePlayers(GameState_t* gs, uint8_t numPlayers)
 	//FIXME: Shim to allow us to continue...
 	PRINT_MSG("FIXME: Need real implementation; setting all random players as a shim");
 	
-	for(int i = 0; i < numPlayers; i++)
+	for(int i = 0; i < numPlayers - 1; i++)
 	{
 		gs->players[i].actions = randomActions;
+		gs->players[i].name = "RANDOM";
 	}
+	gs->players[numPlayers-1].actions = greedyActions;
+	gs->players[numPlayers-1].name = "GREEDY";
 	
 	return err_code;
 	
