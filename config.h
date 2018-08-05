@@ -13,7 +13,7 @@
 //Artificial delay between turns, for debugging
 //Milliseconds between turns. Comment out to disable (or set to 0, but
 //that still has overhead)
-#define TURN_DELAY 1000
+#define TURN_DELAY 100
 
 //Uncomment to enable color printing of the game board
 //Annoying if redirecting to a file, but nice if looking on a terminal

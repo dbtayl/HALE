@@ -50,6 +50,9 @@
   * Chains not involved in the merger will be assigned a value of 0xFF; the
   * involved chains will be numbered 0-(n-1). This variable should be manipulated
   * to number those chains, with the lowest number being merged first.
+  * 
+  * Chains not to be merged- including the surviving chain- MUST have the
+  * value 0xFF.
   */
 
 

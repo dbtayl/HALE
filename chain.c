@@ -187,6 +187,12 @@ HALE_status_t calculatePlayerBonus(GameState_t* gs, uint8_t playerNum, chain_t c
 		else
 		{
 			*bonus = majBonus[chain];
+			
+			//If there are no minority holders, the majority gets that bonus too
+			if(!minHolders)
+			{
+				*bonus += minBonus[chain];
+			}
 		}
 	}
 	//minority holder, exactly ONE majority holder
@@ -199,4 +205,92 @@ HALE_status_t calculatePlayerBonus(GameState_t* gs, uint8_t playerNum, chain_t c
 	
 	
 	return HALE_OK;
+}
+
+
+uint8_t mergerOrderIsValid(GameState_t* gs, uint8_t tile, chain_t survivingChain, uint8_t* order)
+{
+	//Return invalid if inputs are bad
+	if(gs == NULL)
+	{
+		PRINT_MSG("gs is NULL");
+		return 0;
+	}
+	if(order == NULL)
+	{
+		PRINT_MSG("order is NULL");
+		return 0;
+	}
+	
+	chain_t adj[4];
+	getAdjacentSquares(gs, tile, adj); //FIXME: Error checking
+	
+	//-Every chain supposed to be in the merger is present
+	//-No chain NOT supposed to be in the merger IS present
+	for(int i = 0; i < NUM_CHAINS; i++)
+	{
+		uint8_t found = 0;
+		for(int j = 0; j < 4; j++)
+		{
+			if(adj[j] == i)
+			{
+				found = 1;
+			}
+		}
+	
+		//Claim this chain should be merged...
+		if(order[i] < 0xFF)
+		{
+			//...which it shouldn't if it's the surviving chain
+			if(i == survivingChain)
+			{
+				return 0;
+			}
+			//...and therefore it must be an adjacent tile
+			if(!found)
+			{
+				return 0;
+			}
+		}
+		//Claim this chain should NOT be merged...
+		else
+		{
+			//...the only time we should find it is if it's the surviving chain
+			if( (i != survivingChain) && (found) )
+			{
+				return 0;
+			}
+		}
+
+	}// for(i)
+	
+	
+	
+	
+	HANDLE_UNRECOVERABLE_ERROR(HALE_FUNC_NOT_IMPLEMENTED);
+	
+	
+	
+	//-No duplicate order entries (aside from 0xFF)
+	for(int i = 0; i < NUM_CHAINS; i++)
+	{
+		//No need to check for dups of irrelevant entries
+		if(order[i] == 0xFF) //FIXME: Magic numbers!
+		{
+			continue;
+		}
+		//Otherwise, check for dups
+		for(int j = (i + 1); j < NUM_CHAINS; j++)
+		{
+			if(order[i] == order[j])
+			{
+				PRINT_MSG("Two chains with same ordering");
+				return 0;
+			}
+		}
+	}
+	
+	
+	//If not invalid, must be valid
+	return 1;
 }

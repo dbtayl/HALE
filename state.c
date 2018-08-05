@@ -293,6 +293,461 @@ static uint8_t getTileToPlay(GameState_t* gs)
 }
 
 
+//Actually handles the process of doing a merger
+static HALE_status_t handleMerger(GameState_t* gs, chain_t survivingChain, chain_t mergedChain)
+{
+	//Hand out bonuses
+	for(int i = 0; i < gs->numPlayers; i++)
+	{
+		int32_t bonus = 0;
+		calculatePlayerBonus(gs, i, mergedChain, &bonus);
+		gs->players[i].cash += bonus;
+	}
+	
+	int32_t chainPrices[NUM_CHAINS];
+	getChainPricesPerShare(gs, chainPrices, NULL); //FIXME: Error checking
+		
+	//Starting with the current player (presumed to be the merge-maker), allow
+	//exchanging/selling stock
+	for(int i = 0; i < gs->numPlayers; i++)
+	{
+		//current player we're handling
+		uint8_t cp = (gs->currentPlayer + i) % gs->numPlayers;
+		
+		//Ask current player what they want to do
+		GameState_t gsSanitized;
+		makeSanitizedGameStateCopy(&gsSanitized, gs, cp); //FIXME: Error checking
+		
+		uint8_t tradeFor = 0;
+		uint8_t sell = 0;
+		gsSanitized.players[cp].actions.mergerTrade(&gsSanitized, cp, survivingChain, mergedChain, &tradeFor, &sell);
+		
+		//Make sure that the request is valid
+		//Player must hold enough stocks to meet the trade/sell request,
+		//AND there must be enough remaining stocks of the surviving chain
+		//to fulfill the trade
+		if( ((2*tradeFor + sell) > gs->players[cp].stocks[mergedChain]) || (tradeFor > gs->remainingStocks[survivingChain]) )
+		{
+			//Invalid... not executing your trade.
+			PRINT_MSG_INT("Invalid trade request; ignoring. Player", cp);
+			continue;
+		}
+		
+		//If the trade is valid (which it must be at this point), execute
+		//Sale first
+		gs->players[cp].stocks[mergedChain] -= sell;
+		gs->remainingStocks[mergedChain] += sell;
+		gs->players[cp].cash += sell * chainPrices[mergedChain];
+		
+		//Then trade
+		gs->players[cp].stocks[mergedChain] -= 2*tradeFor;
+		gs->remainingStocks[mergedChain] += 2*tradeFor;
+		gs->players[cp].stocks[survivingChain] += tradeFor;
+		gs->remainingStocks[mergedChain] -= tradeFor;
+		
+#ifdef ENABLE_PARANOID_CHECKS
+		{
+			int8_t mergedStocks = gs->remainingStocks[mergedChain];
+			int8_t survivingStocks = gs->remainingStocks[survivingChain];
+			if( (mergedStocks > NUM_STOCKS) || (mergedStocks < 0) )
+			{
+				PRINT_MSG_INT("Ended up with too many/few merged stocks", mergedStocks);
+				PRINT_MSG_ARG("Chain", chainNames[mergedChain]);
+				HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
+			}
+			
+			if( (survivingStocks > NUM_STOCKS) || (survivingStocks < 0) )
+			{
+				PRINT_MSG_INT("Ended up with too many/few surviving stocks", survivingStocks);
+				PRINT_MSG_ARG("Chain", chainNames[survivingChain]);
+				HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
+			}
+		}
+#endif
+	}// for
+	
+	return HALE_OK;
+}
+
+
+//Handles when playing a tile would cause a merger
+//FIXME: Add some checks to ensure assumptions (eg, checks made in handleTilePlayPhase) are valid here
+static HALE_status_t handleTilePlayMerger(GameState_t* gs, uint8_t tile, uint8_t numMergingChains, chain_t* mergingChains)
+{
+	CHECK_NULL_PTR(gs, "gs");
+	CHECK_NULL_PTR(mergingChains, "mergingChains");
+	
+	HALE_status_t err_code = HALE_OK;
+	
+	//First, get the CURRENT size of all chains- that's what's
+	//used to determine bonuses and whatnot
+	uint8_t chainSizes[NUM_CHAINS];
+	getChainSizes(gs, chainSizes);
+	
+	//No matter what you do, you'll need the largest chain/final
+	//surviving chain- might as well do that first.
+	uint8_t largest[NUM_CHAINS] = {}; //entries set to 1 if largest, 0 otherwise
+	uint8_t numLargest = 0;
+	uint8_t sizeLargest = 0;
+	
+	//First, find the largest chain that's merging
+	for(int i = 0; i < NUM_CHAINS; i++)
+	{
+		if( (mergingChains[i]) && (chainSizes[i] > sizeLargest) )
+		{
+			sizeLargest = chainSizes[i];
+			PRINT_MSG_INT("Largest so far", sizeLargest);
+		}
+	}
+#ifdef ENABLE_PARANOID_CHECKS
+	//Check if our largest size is valid
+	if(sizeLargest < 2)
+	{
+		PRINT_MSG("Merger, but invalid largest chain size\r\n");
+		HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
+	}
+	for(int i = 0; i < NUM_CHAINS; i++)
+	{
+		if( (mergingChains[i]) && (chainSizes[i] > sizeLargest) )
+		{
+			PRINT_MSG("Found a chain in the merger larger than the largest!");
+			HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
+		}
+	}
+#endif
+	
+	//Then check every chain that's merging against this size
+	for(int i = 0; i < NUM_CHAINS; i++)
+	{
+		if( (mergingChains[i]) && (chainSizes[i] == sizeLargest) )
+		{
+			numLargest++;
+			largest[i] = 1;
+		}
+	}
+	PRINT_MSG_INT("Got this many chains of largest size", numLargest);
+#ifdef ENABLE_PARANOID_CHECKS
+	//Check if our largest size is valid
+	if(numLargest < 1)
+	{
+		PRINT_MSG("No chain matches the size of the largest chain involved in the merger!\r\n");
+		HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
+	}
+#endif
+	
+	//Now, IF there's a tie for the largest, need to pick which
+	//chain survives
+	chain_t survivingChain = CHAIN_NONE;
+	if(numLargest > 1)
+	{
+		//Need to make duplicates of the game state and the options array, to they can't be messed with
+		GameState_t newgs;
+		err_code = makeSanitizedGameStateCopy(&newgs, gs, gs->currentPlayer);
+		if(err_code != HALE_OK)
+		{
+			PRINT_MSG("Couldn't create sanitized state for asking merger survivor");
+			return err_code;
+		}
+		
+		uint8_t dupLargest[NUM_CHAINS];
+		memcpy((void*)dupLargest, (void*)largest, NUM_CHAINS);
+		
+		survivingChain = newgs.players[gs->currentPlayer].actions.mergerSurvivor(&newgs, gs->currentPlayer, dupLargest);
+		
+		//Verify the player didn't ask for something invalid
+		if(!largest[survivingChain])
+		{
+			survivingChain = CHAIN_NONE;
+			PRINT_MSG("Player requested invalid surviving chain- picking for them!\r\n");
+			//We do this by falling through, which will then pick the first ("only", nominally) "largest" chain and roll with that
+			//FIXME: This biases the game towards choosing to always keep the cheaper chains... but the AI could do that anyway if its what it wanted
+		}
+	}
+	//If we don't have a valid survivor request here, either
+	//there's only ONE largest chain (and no decision to make),
+	//or the player screwed up, and we'll choose for them by
+	//picking the first "largest" we find.
+	if(survivingChain == CHAIN_NONE)
+	{
+		PRINT_MSG("Only one largest (or player screwed up)");
+		for(int i = 0; i < NUM_CHAINS; i++)
+		{
+			if(largest[i])
+			{
+				survivingChain = i;
+				break;
+			}
+		}
+	}
+	
+	PRINT_MSG_ARG("Surviving chain", chainNames[survivingChain]);
+#ifdef ENABLE_PARANOID_CHECKS
+	if(!largest[survivingChain])
+	{
+		PRINT_MSG("Just ensured we had a valid survivor for the merger, but no longer do!\r\n");
+		HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
+	}
+	if(!mergingChains[survivingChain])
+	{
+		PRINT_MSG("Supposed survivor wasn't merging in the first place!\r\n");
+		HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
+	}
+#endif
+	
+	//We now know which chain ultimately survives, but may need
+	//to handle multiple mergers in a player-selected order-
+	//get that order, if necessary
+	uint8_t order[NUM_CHAINS];
+	
+	//Set default order
+	memset(order, 0xff, NUM_CHAINS);
+	uint8_t currentOrder = 0;
+	for(int i = 0; i < NUM_CHAINS; i++)
+	{
+		//If this chain is supposed to merge, AND it's not the survivor, mark it
+		if( (mergingChains[i]) && (i != survivingChain) )
+		{
+			order[i] = currentOrder;
+			currentOrder++;
+		}
+	}
+	
+	//Ask player to select merging order
+	//FIXME: Need to check chain sizes, and only ask when they can't be
+	//ordered largest to smallest? CHECK RULES!
+	if(numMergingChains > 2)
+	{
+		GameState_t newgs;
+		err_code = makeSanitizedGameStateCopy(&newgs, gs, gs->currentPlayer);
+		if(err_code != HALE_OK)
+		{
+			PRINT_MSG("Couldn't create sanitized state for asking merger order");
+			return err_code;
+		}
+		
+		uint8_t sanitizedOrder[NUM_CHAINS];
+		memcpy((void*)sanitizedOrder, (void*)order, NUM_CHAINS);
+		
+		newgs.players[newgs.currentPlayer].actions.mergerOrder(&newgs, newgs.currentPlayer, survivingChain, sanitizedOrder);
+		
+		//Verify order is valid
+		//If not, simply don't copy over the real order
+		if(!mergerOrderIsValid(gs, tile, survivingChain, sanitizedOrder))
+		{
+			PRINT_MSG("Player gave bad merger order; picking one for them");
+		}
+		else
+		{
+			memcpy((void*)order, (void*)sanitizedOrder, NUM_CHAINS);
+		}
+	}
+	
+	//FIXME: Add paranoid check to verify order is OK
+	
+	//Actually handle the mergers
+	for(int i = 0; i < numMergingChains - 1; i++)
+	{
+		//We already know which chain we're merging with- need to pick out the one we're merging
+		//That's the lowest-numbered chain in <order>
+		chain_t merge = 0;
+		for(int j = 1; j < NUM_CHAINS; j++)
+		{
+			if(order[j] < order[merge])
+			{
+				merge = j;
+			}
+		}
+		//We've got the chain to merge, take it off the list
+		order[merge] = 0xff;
+		//Handle merger- award cash, exchange stocks
+		handleMerger(gs, survivingChain, merge); //FIXME: error checking
+	}
+	
+	//Now need to update the board
+	//Place the one tile on the board as the final chain type
+	gs->board[tile] = survivingChain;
+	//Iterate through every tile; if one of the merged chains, update to new chain
+	for(int i = 0; i < BOARD_TILES; i++)
+	{
+		for(int j = 0; j < NUM_CHAINS; j++)
+		{
+			if( (gs->board[i] < CHAIN_NONE) && (mergingChains[gs->board[i]]) )
+			{
+				gs->board[i] = survivingChain;
+				break;
+			}
+		}
+	}
+	
+	//Remember there may be non-chain tiles attached! Do a flood-fill on placed tile to clean any of those up
+	floodFillNonChain(gs, tile);
+	
+	return err_code;
+}
+
+
+//Handles when playing a tile would create a chain
+//FIXME: Add some checks to ensure assumptions (eg, checks made in handleTilePlayPhase) are valid here
+static HALE_status_t handleTilePlayCreate(GameState_t* gs, uint8_t tile)
+{
+	CHECK_NULL_PTR(gs, "gs");
+	
+	HALE_status_t err_code = HALE_OK;
+	
+	GameState_t newgs;
+	err_code = makeSanitizedGameStateCopy(&newgs, gs, gs->currentPlayer);
+	if(err_code != HALE_OK)
+	{
+		PRINT_MSG("Couldn't create sanitized state for creating chain");
+		return err_code;
+	}
+	
+	//Request chain to form from the player
+	chain_t chainToCreate = newgs.players[newgs.currentPlayer].actions.formChain(&newgs, newgs.currentPlayer);
+	
+	//Before doing anything, validate that the requested chain can, in fact, be created
+	uint8_t chainSizes[NUM_CHAINS];
+	getChainSizes(gs, chainSizes);
+	if(chainSizes[chainToCreate] > 0)
+	{
+		PRINT_MSG_INT("Requested to form invalid chain; picking one for them... requested", chainToCreate);
+		//NOTE: i defined external to loop because of paranoid check
+		int i;
+		for(i = 0; i < NUM_CHAINS; i++)
+		{
+			if(chainSizes[i] == 0)
+			{
+				chainToCreate = i;
+				break;
+			}
+		}
+#ifdef ENABLE_PARANOID_CHECKS
+		if(i >= NUM_CHAINS)
+		{
+			PRINT_MSG("Should-be-impossible: Can't find chain to form, but tile identified as valid to play");
+			HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
+		}
+#endif
+	}
+	
+	//Place tile on the board
+	gs->board[tile] = chainToCreate;
+	floodFillNonChain(gs, tile);
+	
+	//Give the founder a share of stock, if possible
+	if(gs->remainingStocks[chainToCreate])
+	{
+		gs->players[gs->currentPlayer].stocks[chainToCreate]++;
+		gs->remainingStocks[chainToCreate]--;
+	}
+	
+	return err_code;
+}
+
+
+//Handles a basic tile play- either doing nothing or exanding an existing chain
+static HALE_status_t handleTilePlayRegular(GameState_t* gs, uint8_t tile)
+{
+	CHECK_NULL_PTR(gs, "gs");
+	
+	HALE_status_t err_code = HALE_OK;
+	
+	chain_t adj[4];
+	getAdjacentSquares(gs, tile, adj);
+	chain_t newType = CHAIN_NONE;
+	
+	//Figure out what chain this tile should be a part of
+	for(int i = 0; i < 4; i++)
+	{
+		if(adj[i] < CHAIN_NONE)
+		{
+#ifdef ENABLE_PARANOID_CHECKS
+			if( (newType != CHAIN_NONE) && (newType != adj[i]) )
+			{
+				PRINT_MSG("Looks like an unexpected merger!");
+				HANDLE_UNRECOVERABLE_ERROR(HALE_BAD_INPUT);
+			}
+#endif
+			newType = adj[i];
+		}
+	}
+	
+	//FIXME: Add a secondary paranoid check to make sure we
+	//didn't screw anything up here
+	
+	//Assign the square to the proper chain
+	gs->board[tile] = newType;
+	
+	//Update connected tiles with the new chain, if there is one
+	if(newType != CHAIN_NONE)
+	{
+		err_code = floodFillNonChain(gs, tile);
+		if(err_code != HALE_OK)
+		{
+			PRINT_MSG("Flood fill failed");
+		}
+	}
+	
+	return err_code;
+}
+
+
+//Handles playing a tile and the associated stuff (mergers, etc.)
+static HALE_status_t handleTilePlayPhase(GameState_t* gs)
+{
+	CHECK_NULL_PTR(gs, "gs");
+	
+	HALE_status_t err_code = HALE_OK;
+	
+	//The player should ALWAYS have a valid tile to play when this is called
+	//getTileToPlay should ensure that
+	uint8_t tile = getTileToPlay(gs);
+	PRINT_MSG_INT("Playing tile", tile);
+	
+	//Even so, make sure it's a valid move in the first place
+	if(!isValidTilePlay(gs, tile))
+	{
+		PRINT_MSG_INT("Bad tile play requested", tile);
+		return HALE_BAD_INPUT;
+	}
+	
+	
+	//Get some information about what playing this tile will do
+	uint8_t numMergingChains = 0;
+	chain_t mergingChains[NUM_CHAINS] = {};
+	uint8_t merger = wouldCauseMerger(gs, tile, &numMergingChains, mergingChains);
+	uint8_t create = wouldCreateChain(gs, tile);
+	
+#ifndef GO_FAST_AND_BREAK_THINGS
+	//Should never have a merge AND create a chain at the same time
+	if(merger && create)
+	{
+		PRINT_MSG("ERROR: Both merger and creating a chain?!?!?");
+		return HALE_SHOULD_BE_IMPOSSIBLE;
+	}
+#endif
+	
+	//Each of these functions will do everything required- handling shares,
+	//money, updating the board, ...
+	if(merger)
+	{
+		PRINT_MSG_INT("Tile would cause merger", tile);
+		err_code = handleTilePlayMerger(gs, tile, numMergingChains, mergingChains);
+	}
+	else if(create)
+	{
+		PRINT_MSG_INT("Tile would create new chain", tile);
+		err_code = handleTilePlayCreate(gs, tile);
+	}
+	else
+	{
+		err_code = handleTilePlayRegular(gs, tile);
+	}
+	
+	return err_code;
+}
+
+
 //Deals with purchasing shares
 static HALE_status_t handleSharePurchasePhase(GameState_t* gs)
 {
@@ -431,81 +886,6 @@ static HALE_status_t handleEndGameQueryPhase(GameState_t* gs, uint8_t* endGame)
 }
 
 
-static HALE_status_t handleMerger(GameState_t* gs, chain_t survivingChain, chain_t mergedChain)
-{
-	//Hand out bonuses
-	for(int i = 0; i < gs->numPlayers; i++)
-	{
-		int32_t bonus = 0;
-		calculatePlayerBonus(gs, i, mergedChain, &bonus);
-		gs->players[i].cash += bonus;
-	}
-	
-	int32_t chainPrices[NUM_CHAINS];
-	getChainPricesPerShare(gs, chainPrices, NULL); //FIXME: Error checking
-	
-	//Starting with the current player (presumed to be the merge-maker), allow
-	//exchanging/selling stock
-	for(int i = 0; i < gs->numPlayers; i++)
-	{
-		//current player we're handling
-		uint8_t cp = (gs->currentPlayer + i) % gs->numPlayers;
-		
-		//Ask current player what they want to do
-		GameState_t gsSanitized;
-		makeSanitizedGameStateCopy(&gsSanitized, gs, gs->currentPlayer); //FIXME: Error checking
-		
-		uint8_t tradeFor = 0;
-		uint8_t sell = 0;
-		gsSanitized.players[cp].actions.mergerTrade(&gsSanitized, cp, survivingChain, mergedChain, &tradeFor, &sell);
-		
-		//Make sure that the request is valid
-		//Player must hold enough stocks to meet the trade/sell request,
-		//AND there must be enough remaining stocks of the surviving chain
-		//to fulfill the trade
-		if( ((2*tradeFor + sell) > gs->players[cp].stocks[mergedChain]) || (tradeFor > gs->remainingStocks[survivingChain]) )
-		{
-			//Invalid... not executing your trade.
-			PRINT_MSG_INT("Invalid trade request; ignoring. Player", cp);
-			continue;
-		}
-		
-		//If the trade is valid (which it must be at this point), execute
-		//Sale first
-		gs->players[cp].stocks[mergedChain] -= sell;
-		gs->remainingStocks[mergedChain] += sell;
-		gs->players[cp].cash += sell * chainPrices[mergedChain];
-		
-		//Then trade
-		gs->players[cp].stocks[mergedChain] -= 2*tradeFor;
-		gs->remainingStocks[mergedChain] += 2*tradeFor;
-		gs->players[cp].stocks[survivingChain] += tradeFor;
-		gs->remainingStocks[mergedChain] -= tradeFor;
-		
-#ifdef ENABLE_PARANOID_CHECKS
-		{
-			int8_t mergedStocks = gs->remainingStocks[mergedChain];
-			int8_t survivingStocks = gs->remainingStocks[survivingChain];
-			if( (mergedStocks > NUM_STOCKS) || (mergedStocks < 0) )
-			{
-				PRINT_MSG_INT("Ended up with too many/few merged stocks", mergedStocks);
-				PRINT_MSG_ARG("Chain", chainNames[mergedChain]);
-				HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
-			}
-			
-			if( (survivingStocks > NUM_STOCKS) || (survivingStocks < 0) )
-			{
-				PRINT_MSG_INT("Ended up with too many/few surviving stocks", survivingStocks);
-				PRINT_MSG_ARG("Chain", chainNames[survivingChain]);
-				HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
-			}
-		}
-#endif
-	}// for
-	
-	return HALE_OK;
-}
-
 void runGame(uint8_t numPlayers)
 {
 	//int i;
@@ -573,15 +953,11 @@ void runGame(uint8_t numPlayers)
 		//draw pile is out as well, and they have to skip playing
 		if(numValidTiles > 0)
 		{
-			uint8_t tile = getTileToPlay(&gs);
-			PRINT_MSG_INT("Playing tile", tile);
+			err_code = handleTilePlayPhase(&gs);
 			
-			
-			//Play the tile; process any new chains/mergers
-			err_code = playTile(&gs, tile, gs.currentPlayer);
 			if(err_code != HALE_OK)
 			{
-				PRINT_MSG("FATAL: playTile failed; aborting");
+				PRINT_MSG("FATAL: handleTilePlayPhase failed; aborting");
 				HANDLE_UNRECOVERABLE_ERROR(err_code);
 			}
 		}

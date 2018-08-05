@@ -1,5 +1,11 @@
 -Check more return codes
 -Check for NULL function pointers in player functions before calling
 	-Probably also when loading the player function sets
--Finish playTile function in board.c- handling mergers and whatnot
 -Check that nothing exposed to the AI can cause a fatal error
+-Verify that nothing passed to player functions is integral to actual game state
+	buyStock is OK
+	mergerSurvivor is OK
+	mergerTrade- (not used yet)
+	All others are fine (no extra pointers)
+-Add a function that just verifies the current board state is valid (no touching chains, no non-chain tiles touching chains)
+	Touching non-chain tiles are OK, so long as they're <= # of players- could be result of initial game setup

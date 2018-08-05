@@ -59,4 +59,12 @@ HALE_status_t getChainBonuses(GameState_t* gs, int32_t* prices, int32_t* majBonu
 HALE_status_t calculatePlayerBonus(GameState_t* gs, uint8_t playerNum, chain_t chain, int32_t* bonus);
 
 
+//Makes sure a proposed merger order of execution is OK
+//-Every chain supposed to be in the merger is present
+//-No chain NOT supposed to be in the merger IS present
+//-No duplicate order entries (aside from 0xFF)
+//Returns 1 if valid, 0 if invalid
+uint8_t mergerOrderIsValid(GameState_t* gs, uint8_t tile, chain_t survivingChain, uint8_t* order);
+
+
 #endif

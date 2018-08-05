@@ -32,6 +32,10 @@ HALE_status_t dealTile(GameState_t* gs, uint8_t playerNum);
 //unplayable hand
 HALE_status_t redealTiles(GameState_t* gs, uint8_t playerNum);
 
+//Populates <adjacentSquares> with the values of the squares up, left, right,
+//and down from the tile <tile>.
+HALE_status_t getAdjacentSquares(GameState_t* gs, uint8_t tile, chain_t* adjacentSquares);
+
 
 //Returns zero if a tile is invalid to play, non-zero if it's a valid move
 uint8_t isValidTilePlay(GameState_t* gs, uint8_t tile);
@@ -59,6 +63,11 @@ uint8_t wouldCreateChain(GameState_t* gs, uint8_t tile);
 //Returns the sizes of ALL of the chains- there's really no point in
 //getting the size of just one- it's equal complexity
 HALE_status_t getChainSizes(GameState_t* gs, uint8_t* sizes);
+
+
+//Expands <tile> on the board, changing all neighboring NON-CHAIN tiles- type CHAIN_NONE only!-
+//to the same chain as <tile>
+HALE_status_t floodFillNonChain(GameState_t* gs, uint8_t tile);
 
 
 //Plays a tile- updates the board to include the new tiles, calls appropriate
