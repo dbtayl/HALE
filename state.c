@@ -612,7 +612,7 @@ static HALE_status_t handleTilePlayCreate(GameState_t* gs, uint8_t tile)
 	//Before doing anything, validate that the requested chain can, in fact, be created
 	uint8_t chainSizes[NUM_CHAINS];
 	getChainSizes(gs, chainSizes);
-	if(chainSizes[chainToCreate] > 0)
+	if( (chainToCreate >= CHAIN_NONE) || (chainSizes[chainToCreate] > 0))
 	{
 		PRINT_MSG_INT("Requested to form invalid chain; picking one for them... requested", chainToCreate);
 		//NOTE: i defined external to loop because of paranoid check
