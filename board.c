@@ -639,6 +639,7 @@ uint8_t canEndGame(GameState_t* gs)
 	
 	uint8_t allChainsSafe = 1;
 	uint8_t someChainBigEnough = 0;
+	uint8_t atLeastOneChain = 0;
 	uint8_t chainSizes[NUM_CHAINS];
 	
 	getChainSizes(gs, chainSizes);
@@ -647,17 +648,23 @@ uint8_t canEndGame(GameState_t* gs)
 	for(int i = 0; i < NUM_CHAINS; i++)
 	{
 		//Chain must be present AND safe- doesn't count if it's not on board
-		if( (chainSizes[i] < SAFE_CHAIN_SIZE) && (chainSizes[i] > 2) )
+		if( (chainSizes[i] < SAFE_CHAIN_SIZE) && (chainSizes[i] >= 2) )
 		{
+			PRINT_MSG("All chains NOT safe");
 			allChainsSafe = 0;
 		}
-		else if(chainSizes[i] >= CHAIN_SIZE_GAME_END)
+		if(chainSizes[i] >= CHAIN_SIZE_GAME_END)
 		{
+			PRINT_MSG("Some chain is big enough");
 			someChainBigEnough = 1;
+		}
+		if(chainSizes[i] >= 2)
+		{
+			atLeastOneChain = 1;
 		}
 	}
 	
-	return (allChainsSafe | someChainBigEnough);
+	return ( (allChainsSafe || someChainBigEnough) && (atLeastOneChain) );
 }
 
 
