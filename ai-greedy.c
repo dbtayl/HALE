@@ -162,8 +162,6 @@ void greedyBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy)
 
 void greedyMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t merged, uint8_t* tradeFor, uint8_t* sell)
 {
-	//FIXME: Double-nested loop, simulate all variations and pick the best
-	
 	int32_t sharePrices[NUM_CHAINS];
 	uint8_t chainSizes[NUM_CHAINS];
 	
@@ -180,6 +178,7 @@ void greedyMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, cha
 	
 	//Need to adjust the board- eliminate the merged chain, turn it into the suriving chain
 	//Otherwise value proposition is off
+	//FIXME: This isn't perfect- final size of the surviving chain will be at least one bigger than we think
 	for(int i = 0; i < BOARD_TILES; i++)
 	{
 		if(gs->board[i] == merged)
