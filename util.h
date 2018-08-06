@@ -57,6 +57,11 @@
 #define CHECK_NULL_PTR(ptr,var) {}
 #endif
 
+//Check if a HALE_status_t is OK; return it if not
+#ifndef VERIFY_HALE_STATUS
+#define VERIFY_HALE_STATUS(status,msg) {if(status != HALE_OK){PRINT_MSG(msg); return status;}}
+#endif
+
 
 void handleUnrecoverableError(const char* func, HALE_status_t err_code);
 

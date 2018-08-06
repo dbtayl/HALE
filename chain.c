@@ -165,11 +165,7 @@ HALE_status_t calculatePlayerBonus(GameState_t* gs, uint8_t playerNum, chain_t c
 	
 	HALE_status_t status = HALE_OK;
 	status = getChainBonuses(gs, NULL, majBonus, minBonus);
-	if(status != HALE_OK)
-	{
-		PRINT_MSG("Error getting chain bonus values");
-		return status;
-	}
+	VERIFY_HALE_STATUS(status, "Error getting chain bonus values");
 	
 	//Majority holder
 	if(playerHoldings == majHolding)

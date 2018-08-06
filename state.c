@@ -140,11 +140,7 @@ static HALE_status_t placeInitialTiles(GameState_t* gs)
 	{
 		uint8_t tile;
 		err_code = drawTile(gs, &tile);
-		if(err_code != HALE_OK)
-		{
-			PRINT_MSG("Error drawing tiles for initial board");
-			HANDLE_UNRECOVERABLE_ERROR(err_code);
-		}
+		VERIFY_HALE_STATUS(err_code, "Error drawing tiles for initial board");
 		
 		//Normally you'd want to call a function to play a tile so it can
 		//handle all of the chain creation/merging/etc. Here we literally
@@ -228,8 +224,8 @@ static uint8_t getTileToPlay(GameState_t* gs)
 	//Before doing anything involving talking to players, make a sanitized
 	//copy of the game state
 	GameState_t gsSanitized;
-	PRINT_MSG("FIXME: Check if making sanitized copy worked!");
-	makeSanitizedGameStateCopy(&gsSanitized, gs, currentPlayer);
+	HALE_status_t err = makeSanitizedGameStateCopy(&gsSanitized, gs, currentPlayer);
+	VERIFY_HALE_STATUS(err, "FATAL: Couldn't get sanitized game state for getting tile");
 
 	//First, request a tile to be played from the current player
 	uint8_t tile = gsSanitized.players[currentPlayer].actions.playTile(&gsSanitized, currentPlayer);
@@ -284,13 +280,6 @@ static uint8_t getTileToPlay(GameState_t* gs)
 		}
 	} 
 	
-	//Should just return at this point?
-	//board.c should probably have a function for playing a tile, returning
-	//merger/new-chain status
-	//board.c should probably also have code for handling mergers (at least
-	//as far as the board is concerned) and making new chains (again, at
-	//least as far as the board is concerned)
-	
 	//Do NOT deal a new tile- that's a different step
 	
 	return tile;
@@ -320,7 +309,8 @@ static HALE_status_t handleMerger(GameState_t* gs, chain_t survivingChain, chain
 		
 		//Ask current player what they want to do
 		GameState_t gsSanitized;
-		makeSanitizedGameStateCopy(&gsSanitized, gs, cp); //FIXME: Error checking
+		HALE_status_t err = makeSanitizedGameStateCopy(&gsSanitized, gs, cp);
+		VERIFY_HALE_STATUS(err, "Couldn't get sanitized game copy for handling merger");
 		
 		uint8_t tradeFor = 0;
 		uint8_t sell = 0;
@@ -386,7 +376,8 @@ static HALE_status_t handleTilePlayMerger(GameState_t* gs, uint8_t tile, uint8_t
 	//First, get the CURRENT size of all chains- that's what's
 	//used to determine bonuses and whatnot
 	uint8_t chainSizes[NUM_CHAINS];
-	getChainSizes(gs, chainSizes);
+	err_code = getChainSizes(gs, chainSizes);
+	VERIFY_HALE_STATUS(err_code, "Couldn't calculate chain sizes for handling tile play merger");
 	
 	//No matter what you do, you'll need the largest chain/final
 	//surviving chain- might as well do that first.
@@ -447,11 +438,7 @@ static HALE_status_t handleTilePlayMerger(GameState_t* gs, uint8_t tile, uint8_t
 		//Need to make duplicates of the game state and the options array, to they can't be messed with
 		GameState_t newgs;
 		err_code = makeSanitizedGameStateCopy(&newgs, gs, gs->currentPlayer);
-		if(err_code != HALE_OK)
-		{
-			PRINT_MSG("Couldn't create sanitized state for asking merger survivor");
-			return err_code;
-		}
+		VERIFY_HALE_STATUS(err_code, "Couldn't create sanitized state for asking merger survivor");
 		
 		uint8_t dupLargest[NUM_CHAINS];
 		memcpy((void*)dupLargest, (void*)largest, NUM_CHAINS);
@@ -523,11 +510,7 @@ static HALE_status_t handleTilePlayMerger(GameState_t* gs, uint8_t tile, uint8_t
 	{
 		GameState_t newgs;
 		err_code = makeSanitizedGameStateCopy(&newgs, gs, gs->currentPlayer);
-		if(err_code != HALE_OK)
-		{
-			PRINT_MSG("Couldn't create sanitized state for asking merger order");
-			return err_code;
-		}
+		VERIFY_HALE_STATUS(err_code, "Couldn't create sanitized state for asking merger order");
 		
 		uint8_t sanitizedOrder[NUM_CHAINS];
 		memcpy((void*)sanitizedOrder, (void*)order, NUM_CHAINS);
@@ -600,11 +583,7 @@ static HALE_status_t handleTilePlayCreate(GameState_t* gs, uint8_t tile)
 	
 	GameState_t newgs;
 	err_code = makeSanitizedGameStateCopy(&newgs, gs, gs->currentPlayer);
-	if(err_code != HALE_OK)
-	{
-		PRINT_MSG("Couldn't create sanitized state for creating chain");
-		return err_code;
-	}
+	VERIFY_HALE_STATUS(err_code, "Couldn't create sanitized state for creating chain");
 	
 	//Request chain to form from the player
 	chain_t chainToCreate = newgs.players[newgs.currentPlayer].actions.formChain(&newgs, newgs.currentPlayer);
@@ -657,7 +636,8 @@ static HALE_status_t handleTilePlayRegular(GameState_t* gs, uint8_t tile)
 	HALE_status_t err_code = HALE_OK;
 	
 	chain_t adj[4];
-	getAdjacentSquares(gs, tile, adj);
+	err_code = getAdjacentSquares(gs, tile, adj);
+	VERIFY_HALE_STATUS(err_code, "Couldn't get adjacent squares");
 	chain_t newType = CHAIN_NONE;
 	
 	//Figure out what chain this tile should be a part of
@@ -686,10 +666,7 @@ static HALE_status_t handleTilePlayRegular(GameState_t* gs, uint8_t tile)
 	if(newType != CHAIN_NONE)
 	{
 		err_code = floodFillNonChain(gs, tile);
-		if(err_code != HALE_OK)
-		{
-			PRINT_MSG("Flood fill failed");
-		}
+		VERIFY_HALE_STATUS(err_code, "Flood fill failed");
 	}
 	
 	return err_code;
@@ -773,8 +750,8 @@ static HALE_status_t handleSharePurchasePhase(GameState_t* gs)
 	uint8_t currentPlayer = gs->currentPlayer;
 
 	GameState_t gsSanitized;
-	PRINT_MSG("FIXME: Check if making sanitized copy worked!");
-	makeSanitizedGameStateCopy(&gsSanitized, gs, currentPlayer);
+	err_code = makeSanitizedGameStateCopy(&gsSanitized, gs, currentPlayer);
+	VERIFY_HALE_STATUS(err_code, "Couldn't make sanitized game state for requesting share purchase");
 
 	//Allow player to request a purchase
 	uint8_t buyRequest[NUM_CHAINS] = {0};
@@ -830,9 +807,10 @@ static HALE_status_t handleSharePurchasePhase(GameState_t* gs)
 	//Ensure player has enough money to pay for the requested purchase
 	int totalCost = 0;
 	int32_t pricePerShare[NUM_CHAINS];
-	PRINT_MSG("FIXME: check return of getChainPricesPerShare");
-	PRINT_MSG("FIXME: Should probably just make one call to getChainPricesPerShare and remove the explicit call to getChainSizes");
-	getChainPricesPerShare(gs, pricePerShare, NULL);
+	//FIXME: Should probably just make one call to getChainPricesPerShare and remove the explicit call to getChainSizes
+	err_code = getChainPricesPerShare(gs, pricePerShare, NULL);
+	VERIFY_HALE_STATUS(err_code, "Couldn't get pricePerShare");
+	
 	for(int i = 0; i < NUM_CHAINS; i++)
 	{
 		totalCost += pricePerShare[i] * buyRequest[i];
@@ -874,8 +852,8 @@ static HALE_status_t handleEndGameQueryPhase(GameState_t* gs, uint8_t* endGame)
 	CHECK_NULL_PTR(endGame, "endGame");
 	
 	GameState_t gsSanitized;
-	PRINT_MSG("FIXME: Check if making sanitized copy worked!");
-	makeSanitizedGameStateCopy(&gsSanitized, gs, gs->currentPlayer);
+	HALE_status_t err = makeSanitizedGameStateCopy(&gsSanitized, gs, gs->currentPlayer);
+	VERIFY_HALE_STATUS(err, "Couldn't get sanitized game state");
 	
 	uint8_t wantToEndGame = gsSanitized.players[gs->currentPlayer].actions.endGame(&gsSanitized, gs->currentPlayer);
 	
