@@ -16,6 +16,8 @@
 #include "ai-greedy.h"
 
 
+#define VERIFY_HALE_STATUS_FATAL(err,msg) {if(err != HALE_OK) {PRINT_MSG(msg); HANDLE_UNRECOVERABLE_ERROR(err);}}
+
 static void initializeGameState(GameState_t* gs)
 {
 	CHECK_NULL_PTR_FATAL(gs, "gs");
@@ -74,7 +76,7 @@ static HALE_status_t configurePlayers(GameState_t* gs, uint8_t numPlayers)
 	if(numPlayers > MAX_PLAYERS)
 	{
 		PRINT_MSG_INT("Too many players (%d) requested!", numPlayers);
-		HANDLE_UNRECOVERABLE_ERROR(HALE_OOB);
+		return HALE_OOB;
 	}
 	
 	//Need to record the number of players in the game into the actual state
@@ -115,12 +117,8 @@ static HALE_status_t dealInitialTiles(GameState_t* gs)
 		for(int j = 0; j < HAND_SIZE; j++)
 		{
 			err_code = dealTile(gs, i);
-			//We won't accept ANY errors in initial deal
-			if(err_code)
-			{
-				PRINT_MSG("Not accepting ANY errors during initial tile dealing");
-				HANDLE_UNRECOVERABLE_ERROR(err_code);
-			}
+			//We won't accept ANY errors in initial deal... but handle that elsewhere
+			VERIFY_HALE_STATUS(err_code, "Not accepting ANY errors during initial tile dealing");
 		}
 	}
 	
@@ -203,7 +201,7 @@ HALE_status_t makeSanitizedGameStateCopy(GameState_t* newgs, GameState_t* gs, ui
 //Handles getting a tile from the player, and validating that it's valid
 //for play
 //Returns the tile to be played
-static uint8_t getTileToPlay(GameState_t* gs)
+static HALE_status_t getTileToPlay(GameState_t* gs, uint8_t* tile)
 {
 	//This should only be called from runGame(), so this should NEVER
 	//happen. Thus being a fatal error.
@@ -228,7 +226,7 @@ static uint8_t getTileToPlay(GameState_t* gs)
 	VERIFY_HALE_STATUS(err, "FATAL: Couldn't get sanitized game state for getting tile");
 
 	//First, request a tile to be played from the current player
-	uint8_t tile = gsSanitized.players[currentPlayer].actions.playTile(&gsSanitized, currentPlayer);
+	*tile = gsSanitized.players[currentPlayer].actions.playTile(&gsSanitized, currentPlayer);
 	
 	//Validate that the tile is legal:
 	//-player had the tile in their hand
@@ -237,16 +235,16 @@ static uint8_t getTileToPlay(GameState_t* gs)
 	//Check if it's in their hand
 	for(int i = 0; i < HAND_SIZE; i++)
 	{
-		if(gs->players[currentPlayer].tiles[i] == tile)
+		if(gs->players[currentPlayer].tiles[i] == *tile)
 		{
 			tileInHand = 1;
 		}
 	}
 	
 	//If it's not in their hand, OR it's an invalid tile to play... too bad
-	if(!isValidTilePlay(gs, tile) || !tileInHand)
+	if(!isValidTilePlay(gs, *tile) || !tileInHand)
 	{
-		PRINT_MSG_INT("Player tried to play invalid tile", tile);
+		PRINT_MSG_INT("Player tried to play invalid tile", *tile);
 		PRINT_MSG_INT("Player", currentPlayer);
 		PRINT_MSG_ARG("Player name", gs->players[currentPlayer].name);
 		
@@ -256,25 +254,23 @@ static uint8_t getTileToPlay(GameState_t* gs)
 		//a tile from their hand for them and play that.
 		for(int i = 0; i < HAND_SIZE; i++)
 		{
-			tile = gs->players[currentPlayer].tiles[i];
-			if(isValidTilePlay(gs, tile))
+			*tile = gs->players[currentPlayer].tiles[i];
+			if(isValidTilePlay(gs, *tile))
 			{
 				break;
 			}
 		}
-		PRINT_MSG_INT("Playing a tile for them", tile);
-#ifndef GO_FAST_AND_BREAK_THINGS
-		if(!isValidTilePlay(gs, tile))
+		PRINT_MSG_INT("Playing a tile for them", *tile);
+		if(!isValidTilePlay(gs, *tile))
 		{
-			HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
+			return HALE_SHOULD_BE_IMPOSSIBLE;
 		}
-#endif //GO_FAST_AND_BREAK_THINGS
 	}
 	
 	//Find the tile in the player's hand and remove it
 	for(int i = 0; i < HAND_SIZE; i++)
 	{
-		if(gs->players[currentPlayer].tiles[i] == tile)
+		if(gs->players[currentPlayer].tiles[i] == *tile)
 		{
 			gs->players[currentPlayer].tiles[i] = TILE_NULL;
 		}
@@ -282,7 +278,7 @@ static uint8_t getTileToPlay(GameState_t* gs)
 	
 	//Do NOT deal a new tile- that's a different step
 	
-	return tile;
+	return HALE_OK;
 }
 
 
@@ -682,7 +678,9 @@ static HALE_status_t handleTilePlayPhase(GameState_t* gs)
 	
 	//The player should ALWAYS have a valid tile to play when this is called
 	//getTileToPlay should ensure that
-	uint8_t tile = getTileToPlay(gs);
+	uint8_t tile;
+	err_code = getTileToPlay(gs, &tile);
+	VERIFY_HALE_STATUS(err_code, "Should be impossible: no valid tile to play");
 	PRINT_MSG_INT("Playing tile", tile);
 	
 	//Even so, make sure it's a valid move in the first place
@@ -882,16 +880,19 @@ void runGame(uint8_t numPlayers)
 	initializeGameState(&gs);
 	
 	//Configure players (populate actions)
-	configurePlayers(&gs, numPlayers);
+	err_code = configurePlayers(&gs, numPlayers);
+	VERIFY_HALE_STATUS_FATAL(err_code, "Failed to configure players");
 	
 	//Deal initial tiles
-	dealInitialTiles(&gs);
+	err_code = dealInitialTiles(&gs);
+	VERIFY_HALE_STATUS_FATAL(err_code, "Failed to deal initial tiles");
 	
 	//Randomize first player
 	gs.currentPlayer = getRandom8(0, gs.numPlayers-1);
 	
 	//Place <numPlayers> random tiles on the board
-	placeInitialTiles(&gs);
+	err_code = placeInitialTiles(&gs);
+	VERIFY_HALE_STATUS_FATAL(err_code, "Failed to deal place tiles");
 	
 	//So now everybody has tiles, the board is set up... time to start!
 	uint8_t gameOver = 0;
@@ -936,12 +937,7 @@ void runGame(uint8_t numPlayers)
 		if(numValidTiles > 0)
 		{
 			err_code = handleTilePlayPhase(&gs);
-			
-			if(err_code != HALE_OK)
-			{
-				PRINT_MSG("FATAL: handleTilePlayPhase failed; aborting");
-				HANDLE_UNRECOVERABLE_ERROR(err_code);
-			}
+			VERIFY_HALE_STATUS_FATAL(err_code, "handleTilePlayPhase failed");
 		}
 		//If we can't play, at least make a note of it
 		else
@@ -961,22 +957,14 @@ void runGame(uint8_t numPlayers)
 		
 		//Allow player to purchase shares
 		err_code = handleSharePurchasePhase(&gs);
-		if(err_code != HALE_OK)
-		{
-			PRINT_MSG("FATAL: handleSharePurchasePhase failed; aborting");
-			HANDLE_UNRECOVERABLE_ERROR(err_code);
-		}
+		VERIFY_HALE_STATUS_FATAL(err_code, "handleSharePurchasePhase failed");
 		
 		
 		if(canEndGame(&gs))
 		{
 			PRINT_MSG("Ending game is allowed right now!");
 			err_code = handleEndGameQueryPhase(&gs, &gameOver);
-			if(err_code != HALE_OK)
-			{
-				PRINT_MSG("FATAL: handleEndGameQueryPhase failed; aborting");
-				HANDLE_UNRECOVERABLE_ERROR(err_code);
-			}
+			VERIFY_HALE_STATUS_FATAL(err_code, "handleEndGameQueryPhase failed");
 			
 			//No need to deal tiles or set next player if we're ending the game
 			if(gameOver)
@@ -987,7 +975,8 @@ void runGame(uint8_t numPlayers)
 		
 		
 		//Deal a tile to the player that just went
-		dealTile(&gs, gs.currentPlayer);
+		err_code = dealTile(&gs, gs.currentPlayer);
+		VERIFY_HALE_STATUS_FATAL(err_code, "dealTile failed");
 		
 		//Set the next player
 		gs.currentPlayer = (gs.currentPlayer + 1) % gs.numPlayers;
