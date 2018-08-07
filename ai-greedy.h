@@ -29,7 +29,7 @@ void greedyMergerOrder(GameState_t* gs, uint8_t playerNum, chain_t survivor, uin
 
 void greedyBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy);
 
-void greedyMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t merged, uint8_t* tradeFor, uint8_t* sell);
+void greedyMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t defunct, uint8_t* tradeFor, uint8_t* sell);
 
 uint8_t greedyEndGame(GameState_t* gs, uint8_t playerNum);
 

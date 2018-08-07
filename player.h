@@ -12,7 +12,7 @@
 	//chain_t (*mergerSurvivor)(GameState_t* gs, uint8_t playerNum, uint8_t* options);
 	//void (*mergerOrder)(GameState_t* gs, uint8_t playerNum, chain_t survivor, uint8_t* options);
 	//void (*buyStock)(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy);
-	//void (*mergerTrade)(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t merged, uint8_t* tradeFor, uint8_t* sell);
+	//void (*mergerTrade)(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t defunct, uint8_t* tradeFor, uint8_t* sell);
 	//uint8_t (*endGame)(GameState_t* gs, uint8_t playerNum);
 	//char* name;
 //} PlayerActions_t;
@@ -67,13 +67,13 @@
  */
 
 
-/* void (*mergerTrade)(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t merged, uint8_t* tradeFor, uint8_t* sell);
+/* void (*mergerTrade)(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t defunct, uint8_t* tradeFor, uint8_t* sell);
  * 
  * Called when the player holds stock in a chain that is disappearing as
  * the result of a merger. This function should populate <tradeFor> and
  * <sell> with the number of shares of <survivor> it wants to trade for,
  * and the number of shares of <sell> it wants to sell.
- * 2*<tradeFor> + <sell> <= <gs->players[playerNum].stocks[merged]>
+ * 2*<tradeFor> + <sell> <= <gs->players[playerNum].stocks[defunct]>
  */
 
 

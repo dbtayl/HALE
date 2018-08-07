@@ -27,7 +27,7 @@ void randomMergerOrder(GameState_t* gs, uint8_t playerNum, chain_t survivor, uin
 
 void randomBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy);
 
-void randomMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t merged, uint8_t* tradeFor, uint8_t* sell);
+void randomMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t defunct, uint8_t* tradeFor, uint8_t* sell);
 
 uint8_t randomEndGame(GameState_t* gs, uint8_t playerNum);
 

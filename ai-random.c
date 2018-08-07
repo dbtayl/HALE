@@ -246,15 +246,15 @@ void randomBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy)
 }
 
 
-void randomMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t merged, uint8_t* tradeFor, uint8_t* sell)
+void randomMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t defunct, uint8_t* tradeFor, uint8_t* sell)
 {
 	//The most stocks we could trade FOR or sell
 	//Selling is easy- can sell at most how many you have
-	uint8_t maxSell = gs->players[playerNum].stocks[merged];
+	uint8_t maxSell = gs->players[playerNum].stocks[defunct];
 	
 	//How many you could trade FOR could be defined by how many you have,
 	//or it could be defined by how many are available to trade for
-	uint8_t maxTradeFor = gs->players[playerNum].stocks[merged]/2;
+	uint8_t maxTradeFor = gs->players[playerNum].stocks[defunct]/2;
 	if(gs->remainingStocks[survivor] < maxTradeFor)
 	{
 		maxTradeFor = gs->remainingStocks[survivor];
@@ -284,7 +284,7 @@ void randomMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, cha
 	else
 	{
 		//Before trading, need to re-check limits
-		uint8_t possibleNewLimit = (gs->players[playerNum].stocks[merged] - *sell)/2;
+		uint8_t possibleNewLimit = (gs->players[playerNum].stocks[defunct] - *sell)/2;
 		if(possibleNewLimit < maxTradeFor)
 		{
 			maxTradeFor = possibleNewLimit;

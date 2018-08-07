@@ -307,13 +307,13 @@ static HALE_status_t getTileToPlay(GameState_t* gs, uint8_t* tile)
 
 
 //Actually handles the process of doing a merger
-static HALE_status_t handleMerger(GameState_t* gs, chain_t survivingChain, chain_t mergedChain)
+static HALE_status_t handleMerger(GameState_t* gs, chain_t survivingChain, chain_t defunctChain)
 {
 	//Hand out bonuses
 	for(int i = 0; i < gs->numPlayers; i++)
 	{
 		int32_t bonus = 0;
-		calculatePlayerBonus(gs, i, mergedChain, &bonus);
+		calculatePlayerBonus(gs, i, defunctChain, &bonus);
 		gs->players[i].cash += bonus;
 	}
 	
@@ -334,13 +334,13 @@ static HALE_status_t handleMerger(GameState_t* gs, chain_t survivingChain, chain
 		
 		uint8_t tradeFor = 0;
 		uint8_t sell = 0;
-		gsSanitized.players[cp].actions.mergerTrade(&gsSanitized, cp, survivingChain, mergedChain, &tradeFor, &sell);
+		gsSanitized.players[cp].actions.mergerTrade(&gsSanitized, cp, survivingChain, defunctChain, &tradeFor, &sell);
 		
 		//Make sure that the request is valid
 		//Player must hold enough stocks to meet the trade/sell request,
 		//AND there must be enough remaining stocks of the surviving chain
 		//to fulfill the trade
-		if( ((2*tradeFor + sell) > gs->players[cp].stocks[mergedChain]) || (tradeFor > gs->remainingStocks[survivingChain]) )
+		if( ((2*tradeFor + sell) > gs->players[cp].stocks[defunctChain]) || (tradeFor > gs->remainingStocks[survivingChain]) )
 		{
 			//Invalid... not executing your trade.
 			PRINT_MSG_INT("Invalid trade request; ignoring. Player", cp);
@@ -349,24 +349,24 @@ static HALE_status_t handleMerger(GameState_t* gs, chain_t survivingChain, chain
 		
 		//If the trade is valid (which it must be at this point), execute
 		//Sale first
-		gs->players[cp].stocks[mergedChain] -= sell;
-		gs->remainingStocks[mergedChain] += sell;
-		gs->players[cp].cash += sell * chainPrices[mergedChain];
+		gs->players[cp].stocks[defunctChain] -= sell;
+		gs->remainingStocks[defunctChain] += sell;
+		gs->players[cp].cash += sell * chainPrices[defunctChain];
 		
 		//Then trade
-		gs->players[cp].stocks[mergedChain] -= 2*tradeFor;
-		gs->remainingStocks[mergedChain] += 2*tradeFor;
+		gs->players[cp].stocks[defunctChain] -= 2*tradeFor;
+		gs->remainingStocks[defunctChain] += 2*tradeFor;
 		gs->players[cp].stocks[survivingChain] += tradeFor;
-		gs->remainingStocks[mergedChain] -= tradeFor;
+		gs->remainingStocks[defunctChain] -= tradeFor;
 		
 #ifdef ENABLE_PARANOID_CHECKS
 		{
-			int8_t mergedStocks = gs->remainingStocks[mergedChain];
+			int8_t defunctStocks = gs->remainingStocks[defunctChain];
 			int8_t survivingStocks = gs->remainingStocks[survivingChain];
-			if( (mergedStocks > NUM_STOCKS) || (mergedStocks < 0) )
+			if( (defunctStocks > NUM_STOCKS) || (defunctStocks < 0) )
 			{
-				PRINT_MSG_INT("Ended up with too many/few merged stocks", mergedStocks);
-				PRINT_MSG_ARG("Chain", chainNames[mergedChain]);
+				PRINT_MSG_INT("Ended up with too many/few defunct stocks", defunctStocks);
+				PRINT_MSG_ARG("Chain", chainNames[defunctChain]);
 				HANDLE_UNRECOVERABLE_ERROR(HALE_SHOULD_BE_IMPOSSIBLE);
 			}
 			
@@ -556,24 +556,24 @@ static HALE_status_t handleTilePlayMerger(GameState_t* gs, uint8_t tile, uint8_t
 	{
 		//We already know which chain we're merging with- need to pick out the one we're merging
 		//That's the lowest-numbered chain in <order>
-		chain_t merge = 0;
+		chain_t defunct = 0;
 		for(int j = 1; j < NUM_CHAINS; j++)
 		{
-			if(order[j] < order[merge])
+			if(order[j] < order[defunct])
 			{
-				merge = j;
+				defunct = j;
 			}
 		}
 		//We've got the chain to merge, take it off the list
-		order[merge] = 0xff;
+		order[defunct] = 0xff;
 		//Handle merger- award cash, exchange stocks
-		handleMerger(gs, survivingChain, merge); //FIXME: error checking
+		handleMerger(gs, survivingChain, defunct); //FIXME: error checking
 	}
 	
 	//Now need to update the board
 	//Place the one tile on the board as the final chain type
 	gs->board[tile] = survivingChain;
-	//Iterate through every tile; if one of the merged chains, update to new chain
+	//Iterate through every tile; if one of the defunct chains, update to new chain
 	for(int i = 0; i < BOARD_TILES; i++)
 	{
 		for(int j = 0; j < NUM_CHAINS; j++)

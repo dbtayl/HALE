@@ -160,7 +160,7 @@ void greedyBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy)
 }
 
 
-void greedyMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t merged, uint8_t* tradeFor, uint8_t* sell)
+void greedyMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t defunct, uint8_t* tradeFor, uint8_t* sell)
 {
 	int32_t sharePrices[NUM_CHAINS];
 	uint8_t chainSizes[NUM_CHAINS];
@@ -169,19 +169,19 @@ void greedyMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, cha
 	
 	//If we only have one share, the loop won't run- greedy option is
 	//to sell here, so make that the default
-	uint8_t bestSell = gs->players[playerNum].stocks[merged];
+	uint8_t bestSell = gs->players[playerNum].stocks[defunct];
 	uint8_t bestValue = 0;
 	
 	Player_t* p = &(gs->players[playerNum]);
 	
 	getChainPricesPerShare(gs, sharePrices, chainSizes);
 	
-	//Need to adjust the board- eliminate the merged chain, turn it into the suriving chain
+	//Need to adjust the board- eliminate the defunct chain, turn it into the suriving chain
 	//Otherwise value proposition is off
 	//FIXME: This isn't perfect- final size of the surviving chain will be at least one bigger than we think
 	for(int i = 0; i < BOARD_TILES; i++)
 	{
-		if(gs->board[i] == merged)
+		if(gs->board[i] == defunct)
 		{
 			gs->board[i] = survivor;
 		}
@@ -189,7 +189,7 @@ void greedyMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, cha
 	
 	//Trade on outside loop, so never end up testing an always-wrong
 	//"keep one share of defunct chain" option
-	for(int i = 0; i < p->stocks[merged]/2; i++)
+	for(int i = 0; i < p->stocks[defunct]/2; i++)
 	{
 		//If there aren't enough shares to trade for, don't bother
 		//evaluating this option
@@ -199,7 +199,7 @@ void greedyMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, cha
 		}
 		
 		//"trade"
-		p->stocks[merged] -= 2*i;
+		p->stocks[defunct] -= 2*i;
 		p->stocks[survivor] += i;
 		//No need to deal with remaining stocks- we've done the
 		//check we care about on them
@@ -208,10 +208,10 @@ void greedyMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, cha
 		//We really don't need a loop here- just sell everything
 		//we don't trade. Keeping defunct stocks is believed to
 		//be dumb by this AI
-		int j = p->stocks[merged]; //p->stocks[merged] has already been reduced by "trading"
+		int j = p->stocks[defunct]; //p->stocks[defunct] has already been reduced by "trading"
 		//"sell"
-		p->stocks[merged] -= j;
-		p->cash += j*sharePrices[merged];
+		p->stocks[defunct] -= j;
+		p->cash += j*sharePrices[defunct];
 		
 		//Calculate value of this option
 		int32_t val;
@@ -224,12 +224,12 @@ void greedyMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, cha
 		}
 		
 		//undo "sell"
-		p->stocks[merged] += j;
-		p->cash -= j*sharePrices[merged];
+		p->stocks[defunct] += j;
+		p->cash -= j*sharePrices[defunct];
 		
 		
 		//undo the "trade"
-		p->stocks[merged] += 2*i;
+		p->stocks[defunct] += 2*i;
 		p->stocks[survivor] -= i;
 	}
 	

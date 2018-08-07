@@ -70,7 +70,7 @@ void badBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy)
 }
 
 
-void badMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t merged, uint8_t* tradeFor, uint8_t* sell)
+void badMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t defunct, uint8_t* tradeFor, uint8_t* sell)
 {
 	//FIXME: Pure random for the moment
 	*tradeFor = rand() & 0xff;
