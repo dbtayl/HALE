@@ -340,7 +340,8 @@ static HALE_status_t handleMerger(GameState_t* gs, chain_t survivingChain, chain
 		//Player must hold enough stocks to meet the trade/sell request,
 		//AND there must be enough remaining stocks of the surviving chain
 		//to fulfill the trade
-		if( ((2*tradeFor + sell) > gs->players[cp].stocks[defunctChain]) || (tradeFor > gs->remainingStocks[survivingChain]) )
+		//Cast to 16 bits to prevent check overflowing...
+		if( ((2*((uint16_t)tradeFor) + ((uint16_t)sell)) > (uint16_t)gs->players[cp].stocks[defunctChain]) || (tradeFor > gs->remainingStocks[survivingChain]) )
 		{
 			//Invalid... not executing your trade.
 			PRINT_MSG_INT("Invalid trade request; ignoring. Player", cp);
@@ -357,7 +358,7 @@ static HALE_status_t handleMerger(GameState_t* gs, chain_t survivingChain, chain
 		gs->players[cp].stocks[defunctChain] -= 2*tradeFor;
 		gs->remainingStocks[defunctChain] += 2*tradeFor;
 		gs->players[cp].stocks[survivingChain] += tradeFor;
-		gs->remainingStocks[defunctChain] -= tradeFor;
+		gs->remainingStocks[survivingChain] -= tradeFor;
 		
 #ifdef ENABLE_PARANOID_CHECKS
 		{
@@ -829,7 +830,6 @@ static HALE_status_t handleSharePurchasePhase(GameState_t* gs)
 	//Ensure player has enough money to pay for the requested purchase
 	int totalCost = 0;
 	int32_t pricePerShare[NUM_CHAINS];
-	//FIXME: Should probably just make one call to getChainPricesPerShare and remove the explicit call to getChainSizes
 	err_code = getChainPricesPerShare(gs, pricePerShare, NULL);
 	VERIFY_HALE_STATUS(err_code, "Couldn't get pricePerShare");
 	
