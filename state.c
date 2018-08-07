@@ -175,10 +175,10 @@ static HALE_status_t placeInitialTiles(GameState_t* gs)
 }
 
 
-HALE_status_t makeSanitizedGameStateCopy(GameState_t* newgs, GameState_t* gs, uint8_t playerNum)
+HALE_status_t makeSanitizedGameStateCopy(GameState_t* gsSanitized, GameState_t* gs, uint8_t playerNum)
 {
 	CHECK_NULL_PTR(gs, "gs");
-	CHECK_NULL_PTR(newgs, "newgs");
+	CHECK_NULL_PTR(gsSanitized, "gsSanitized");
 	
 	//Check if playerNum is in bounds
 #ifndef GO_FAST_AND_BREAK_THINGS
@@ -191,19 +191,19 @@ HALE_status_t makeSanitizedGameStateCopy(GameState_t* newgs, GameState_t* gs, ui
 	
 	//Board state, stock states, etc. get copied over entirely. They're
 	//public information
-	newgs->numPlayers = gs->numPlayers;
-	memcpy(newgs->board, gs->board, sizeof(gs->board[0])*BOARD_TILES);
-	memcpy(newgs->remainingStocks, gs->remainingStocks, sizeof(gs->remainingStocks[0])*NUM_CHAINS);
-	newgs->remainingTiles = gs->remainingTiles;
-	newgs->currentPlayer = gs->currentPlayer;
+	gsSanitized->numPlayers = gs->numPlayers;
+	memcpy(gsSanitized->board, gs->board, sizeof(gs->board[0])*BOARD_TILES);
+	memcpy(gsSanitized->remainingStocks, gs->remainingStocks, sizeof(gs->remainingStocks[0])*NUM_CHAINS);
+	gsSanitized->remainingTiles = gs->remainingTiles;
+	gsSanitized->currentPlayer = gs->currentPlayer;
 	
 	//Zero out the remaining tile pool- the players don't get to see that
-	memset(newgs->tilePool, 0, sizeof(newgs->tilePool[0])*BOARD_TILES);
+	memset(gsSanitized->tilePool, 0, sizeof(gsSanitized->tilePool[0])*BOARD_TILES);
 	
 	//Handle player states specially- each player gets to know their own
 	//state, but not the COMPLETE state of the rest of the players
 	//Copy over complete states
-	memcpy(newgs->players, gs->players, sizeof(gs->players[0])*gs->numPlayers);
+	memcpy(gsSanitized->players, gs->players, sizeof(gs->players[0])*gs->numPlayers);
 	
 	//zero out the information you don't get
 	for(int i = 0; i < gs->numPlayers; i++)
@@ -213,8 +213,8 @@ HALE_status_t makeSanitizedGameStateCopy(GameState_t* newgs, GameState_t* gs, ui
 		{
 			//Other players don't get to see what tiles the other players
 			//have, nor what actions the other players have registered
-			memset(newgs->players[i].tiles, 0, sizeof(newgs->players[i].tiles[0])*HAND_SIZE);
-			memset(&(newgs->players[i].actions), 0, sizeof(newgs->players[i].actions));
+			memset(gsSanitized->players[i].tiles, 0, sizeof(gsSanitized->players[i].tiles[0])*HAND_SIZE);
+			memset(&(gsSanitized->players[i].actions), 0, sizeof(gsSanitized->players[i].actions));
 		}
 	}
 	
@@ -456,14 +456,14 @@ static HALE_status_t handleTilePlayMerger(GameState_t* gs, uint8_t tile, uint8_t
 	if(numLargest > 1)
 	{
 		//Need to make duplicates of the game state and the options array, to they can't be messed with
-		GameState_t newgs;
-		err_code = makeSanitizedGameStateCopy(&newgs, gs, gs->currentPlayer);
+		GameState_t gsSanitized;
+		err_code = makeSanitizedGameStateCopy(&gsSanitized, gs, gs->currentPlayer);
 		VERIFY_HALE_STATUS(err_code, "Couldn't create sanitized state for asking merger survivor");
 		
 		uint8_t dupLargest[NUM_CHAINS];
 		memcpy((void*)dupLargest, (void*)largest, NUM_CHAINS);
 		
-		survivingChain = newgs.players[gs->currentPlayer].actions.mergerSurvivor(&newgs, gs->currentPlayer, dupLargest);
+		survivingChain = gsSanitized.players[gs->currentPlayer].actions.mergerSurvivor(&gsSanitized, gs->currentPlayer, dupLargest);
 		
 		//Verify the player didn't ask for something invalid
 		if( (survivingChain >= CHAIN_NONE) || (!largest[survivingChain]) )
@@ -528,14 +528,14 @@ static HALE_status_t handleTilePlayMerger(GameState_t* gs, uint8_t tile, uint8_t
 	//ordered largest to smallest? CHECK RULES!
 	if(numMergingChains > 2)
 	{
-		GameState_t newgs;
-		err_code = makeSanitizedGameStateCopy(&newgs, gs, gs->currentPlayer);
+		GameState_t gsSanitized;
+		err_code = makeSanitizedGameStateCopy(&gsSanitized, gs, gs->currentPlayer);
 		VERIFY_HALE_STATUS(err_code, "Couldn't create sanitized state for asking merger order");
 		
 		uint8_t sanitizedOrder[NUM_CHAINS];
 		memcpy((void*)sanitizedOrder, (void*)order, NUM_CHAINS);
 		
-		newgs.players[newgs.currentPlayer].actions.mergerOrder(&newgs, newgs.currentPlayer, survivingChain, sanitizedOrder);
+		gsSanitized.players[gsSanitized.currentPlayer].actions.mergerOrder(&gsSanitized, gsSanitized.currentPlayer, survivingChain, sanitizedOrder);
 		
 		//Verify order is valid
 		//If not, simply don't copy over the real order
@@ -601,12 +601,12 @@ static HALE_status_t handleTilePlayCreate(GameState_t* gs, uint8_t tile)
 	
 	HALE_status_t err_code = HALE_OK;
 	
-	GameState_t newgs;
-	err_code = makeSanitizedGameStateCopy(&newgs, gs, gs->currentPlayer);
+	GameState_t gsSanitized;
+	err_code = makeSanitizedGameStateCopy(&gsSanitized, gs, gs->currentPlayer);
 	VERIFY_HALE_STATUS(err_code, "Couldn't create sanitized state for creating chain");
 	
 	//Request chain to form from the player
-	chain_t chainToCreate = newgs.players[newgs.currentPlayer].actions.formChain(&newgs, newgs.currentPlayer);
+	chain_t chainToCreate = gsSanitized.players[gsSanitized.currentPlayer].actions.formChain(&gsSanitized, gsSanitized.currentPlayer);
 	
 	//Before doing anything, validate that the requested chain can, in fact, be created
 	uint8_t chainSizes[NUM_CHAINS];
