@@ -14,6 +14,7 @@
 //FIXME: Should probably have a better way of doing this
 #include "ai-random.h"
 #include "ai-greedy.h"
+#include "ai-bad.h"
 
 
 #define VERIFY_HALE_STATUS_FATAL(err,msg) {if(err != HALE_OK) {PRINT_MSG(msg); HANDLE_UNRECOVERABLE_ERROR(err);}}
@@ -67,15 +68,13 @@ static void initializeGameState(GameState_t* gs)
 
 static HALE_status_t configurePlayers(GameState_t* gs, uint8_t numPlayers)
 {
-	//This should only be called from runGame(), so any failure in input
-	//should be fatal
 	CHECK_NULL_PTR_FATAL(gs, "gs");
 	
 	HALE_status_t err_code = HALE_OK;
 	
 	if(numPlayers > MAX_PLAYERS)
 	{
-		PRINT_MSG_INT("Too many players (%d) requested!", numPlayers);
+		PRINT_MSG_INT("Too many players requested", numPlayers);
 		return HALE_OOB;
 	}
 	
@@ -85,13 +84,38 @@ static HALE_status_t configurePlayers(GameState_t* gs, uint8_t numPlayers)
 	//FIXME: Shim to allow us to continue...
 	PRINT_MSG("FIXME: Need real implementation; setting all random players as a shim");
 	
-	for(int i = 0; i < numPlayers - 1; i++)
+	if(numPlayers < 4)
+	{
+		PRINT_MSG_INT("Number of players must be at least 4 for this shim to work. Players", numPlayers);
+		return HALE_BAD_INPUT;
+	}
+	
+	for(int i = 0; i < numPlayers - 2; i++)
 	{
 		gs->players[i].actions = randomActions;
 		gs->players[i].name = "RANDOM";
 	}
+	gs->players[numPlayers-2].actions = badActions;
+	gs->players[numPlayers-2].name = "BAD";
+	
 	gs->players[numPlayers-1].actions = greedyActions;
 	gs->players[numPlayers-1].name = "GREEDY";
+	
+	for(int i = 0; i < numPlayers; i++)
+	{
+		//Check that all player actions are non-NULL
+		if( (! gs->players[i].actions.playTile) ||
+			(! gs->players[i].actions.formChain) ||
+			(! gs->players[i].actions.mergerSurvivor) ||
+			(! gs->players[i].actions.mergerOrder) ||
+			(! gs->players[i].actions.buyStock) ||
+			(! gs->players[i].actions.mergerTrade) ||
+			(! gs->players[i].actions.endGame) )
+		{
+			PRINT_MSG_INT("Input player has one or more NULL functions! Player", i);
+			return HALE_BAD_INPUT;
+		}
+	}
 	
 	return err_code;
 	
