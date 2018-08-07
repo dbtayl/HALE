@@ -466,7 +466,7 @@ static HALE_status_t handleTilePlayMerger(GameState_t* gs, uint8_t tile, uint8_t
 		survivingChain = newgs.players[gs->currentPlayer].actions.mergerSurvivor(&newgs, gs->currentPlayer, dupLargest);
 		
 		//Verify the player didn't ask for something invalid
-		if(!largest[survivingChain])
+		if( (survivingChain >= CHAIN_NONE) || (!largest[survivingChain]) )
 		{
 			survivingChain = CHAIN_NONE;
 			PRINT_MSG("Player requested invalid surviving chain- picking for them!\r\n");
@@ -998,9 +998,12 @@ void runGame(uint8_t numPlayers)
 		}
 		
 		
-		//Deal a tile to the player that just went
-		err_code = dealTile(&gs, gs.currentPlayer);
-		VERIFY_HALE_STATUS_FATAL(err_code, "dealTile failed");
+		//Deal a tile to the player that just went, if there are tiles left
+		if(gs.remainingTiles)
+		{
+			err_code = dealTile(&gs, gs.currentPlayer);
+			VERIFY_HALE_STATUS_FATAL(err_code, "dealTile failed");
+		}
 		
 		//Set the next player
 		gs.currentPlayer = (gs.currentPlayer + 1) % gs.numPlayers;
