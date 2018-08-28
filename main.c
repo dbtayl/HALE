@@ -6,7 +6,7 @@
 #include "chain.h"
 #include "util.h"
 
-int main()
+int main(int argc, char* argv[])
 {
 	//FIXME: Figure out player configuration (number of players, human/AI)
 	PRINT_MSG("FIXME: Need to identify player configuration: number of players, human/AI, ...");

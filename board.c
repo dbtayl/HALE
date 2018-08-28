@@ -689,6 +689,9 @@ HALE_status_t printGameBoard(GameState_t* gs)
 	int i, j;
 	for(i = 0; i < BOARD_HEIGHT; i++)
 	{
+#ifdef ENABLE_BOARD_TILE_NUMBERS
+		printf("%3d ", i * BOARD_WIDTH);
+#endif
 		for(j = 0; j < BOARD_WIDTH; j++)
 		{
 			chain_t tileType = gs->board[i*BOARD_WIDTH+j];

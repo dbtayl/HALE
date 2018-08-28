@@ -19,6 +19,11 @@
 //Annoying if redirecting to a file, but nice if looking on a terminal
 #define ENABLE_COLOR_BOARD_PRINT
 
+//Uncomment to print tile numbers when board is printed
+//Useful for humans only
+#define ENABLE_BOARD_TILE_NUMBERS
+
+
 //Return values
 typedef enum	{	HALE_OK = 0,
 					HALE_FAIL,

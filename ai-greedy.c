@@ -90,7 +90,7 @@ void greedyBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy)
 			uint8_t skip1 = ((chainSizes[j] < 2) || (gs->remainingStocks[j] == 0) || (sharePrices[j] > p->cash));
 			if(skip1)
 			{
-				continue;
+				//continue;
 			}
 			else
 			{
@@ -104,7 +104,7 @@ void greedyBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy)
 				uint8_t skip2 = ((chainSizes[k] < 2) || (gs->remainingStocks[k] == 0) || (sharePrices[k] > p->cash));
 				if(skip2)
 				{
-					continue;
+					//continue;
 				}
 				else
 				{
