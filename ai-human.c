@@ -179,14 +179,11 @@ void humanMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, chai
 #endif
 	
 	//Nope, error checking is for chumps. Humans can verify their own inputs
-	printf("Enter numer of shares to trade FOR and to sell: ");
+	printf("Enter numer of shares to trade FOR and to sell (have %d shares): ", gs->players[playerNum].stocks[defunct]);
 	int tmptrade, tmpsell;
-	scanf("%d %d", tmptrade, tmpsell);
+	scanf("%d %d", &tmptrade, &tmpsell);
 	*tradeFor = tmptrade;
 	*sell = tmpsell;
-	
-	//Segfaulting... see if it's before or after here
-	printf("DONE\r\n");
 	
 	return;
 }
