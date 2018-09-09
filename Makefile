@@ -27,8 +27,7 @@ ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
 endif
 
 
-default: bin
-	
+.DEFAULT_GOAL := bin
 
 #This is the rule for creating the dependency files
 $(DEPDIR)/%.d: %.c $(DEPDIR)
