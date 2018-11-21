@@ -6,12 +6,22 @@
 #include "chain.h"
 #include "util.h"
 
+#include "config.h"
+#ifdef HALE_ENABLE_PYTHON
+#include <Python.h>
+#endif //HALE_ENABLE_PYTHON
+
 int main(int argc, char* argv[])
 {
 	//FIXME: Figure out player configuration (number of players, human/AI)
 	PRINT_MSG("FIXME: Need to identify player configuration: number of players, human/AI, ...");
 	
 	//FIXME: Initialize UI
+	
+	//Initialize Python, if appropriate
+#ifdef HALE_ENABLE_PYTHON
+	Py_Initialize();
+#endif //HALE_ENABLE_PYTHON
 	
 	//Seed random number generator
 	srand(time(NULL));

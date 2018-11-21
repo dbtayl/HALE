@@ -22,7 +22,7 @@
 /* uint8_t (*playTile)(GameState_t* gs, uint8_t playerNum);
  * 
  * Called when given the option to play a tile. Should return a tile 
- * (0-BOARD_TILES) from the player's hand that's valid to play.
+ * (0-(BOARD_TILES-1)) from the player's hand that's valid to play.
  */
 
 

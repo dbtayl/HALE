@@ -23,6 +23,9 @@
 //Useful for humans only
 #define ENABLE_BOARD_TILE_NUMBERS
 
+//Uncomment to enable Python bindings
+#define HALE_ENABLE_PYTHON
+
 
 //Return values
 typedef enum	{	HALE_OK = 0,

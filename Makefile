@@ -5,6 +5,9 @@ CC=gcc
 CFLAGS=-Wall -Os -fshort-enums
 BIN=HALE
 
+#There's got to be a smarter way to do this, but comment if you don't want Python
+CFLAGS+= `python3-config --cflags --ldflags --libs`
+
 DEPDIR=.d
 
 # Add .d to Make's recognized suffixes.
@@ -28,6 +31,8 @@ endif
 
 
 .DEFAULT_GOAL := bin
+
+default: bin
 
 #This is the rule for creating the dependency files
 $(DEPDIR)/%.d: %.c $(DEPDIR)
