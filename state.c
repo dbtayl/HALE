@@ -16,6 +16,7 @@
 #include "ai-greedy.h"
 #include "ai-bad.h"
 #include "ai-human.h"
+#include "ai-python-sample.h"
 
 
 #define VERIFY_HALE_STATUS_FATAL(err,msg) {if(err != HALE_OK) {PRINT_MSG(msg); HANDLE_UNRECOVERABLE_ERROR(err);}}
@@ -96,8 +97,8 @@ static HALE_status_t configurePlayers(GameState_t* gs, uint8_t numPlayers)
 		gs->players[i].actions = randomActions;
 		gs->players[i].name = "RANDOM";
 	}
-	gs->players[numPlayers-2].actions = humanActions;
-	gs->players[numPlayers-2].name = "HUMAN";
+	gs->players[numPlayers-2].actions = pythonSampleActions;
+	gs->players[numPlayers-2].name = "PYTHON";
 	
 	gs->players[numPlayers-1].actions = greedyActions;
 	gs->players[numPlayers-1].name = "GREEDY";

@@ -14,7 +14,7 @@
 //Note that Py_Initialize will have already been called, you do NOT need to call it here
 
 //This is the name of the Python file you want to import
-#define AI_PYTHON_SAMPLE_MOD_NAME "ai-python-sample"
+#define AI_PYTHON_SAMPLE_MOD_NAME "aipythonsample"
 
 //Names of the functions for each action
 #define AI_PYTHON_SAMPLE_FUNC_PLAY_TILE "pythonSamplePlayTile"

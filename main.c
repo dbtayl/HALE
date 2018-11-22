@@ -21,6 +21,11 @@ int main(int argc, char* argv[])
 	//Initialize Python, if appropriate
 #ifdef HALE_ENABLE_PYTHON
 	Py_Initialize();
+	//Hack to load modules from current directory
+	PyRun_SimpleString(
+	"import sys\n"
+	"import os\n"
+	"sys.path.append(os.getcwd())\n" );
 #endif //HALE_ENABLE_PYTHON
 	
 	//Seed random number generator
