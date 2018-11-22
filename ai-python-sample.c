@@ -98,9 +98,10 @@ uint8_t pythonSamplePlayTile(GameState_t* gs, uint8_t playerNum)
 	PyTuple_SetItem(pArgs, 0, pyGs);
 	PyTuple_SetItem(pArgs, 1, pPlayerNum);
 	
+	//Do NOT decrement references- PyTuple_SetItem is a special case that STEALS a reference instead of incrementing
 	//Decrement references
-	Py_XDECREF(pPlayerNum);
-	Py_XDECREF(pyGs);
+	//Py_XDECREF(pPlayerNum);
+	//Py_XDECREF(pyGs);
 	
 	//Call python code
 	PyObject* pRetVal = PyObject_CallObject(pyFuncPlayTile, pArgs);
@@ -118,8 +119,10 @@ uint8_t pythonSamplePlayTile(GameState_t* gs, uint8_t playerNum)
 		Py_XDECREF(pRetVal);
 	}
 	
-	//Clean up copy of game state!
-	Py_XDECREF(pyGs);
+	//Clean up references
+	//pPlayerNum and pyGs are cleaned up when pArgs is cleaned up (?)
+	Py_XDECREF(pArgs);
+	Py_XDECREF(pRetVal);
 	
 	//May or may not be valid... too bad if it's not!
 	return tile;
@@ -132,8 +135,9 @@ chain_t pythonSampleFormChain(GameState_t* gs, uint8_t playerNum)
 	
 	//FIXME: See boilerplate in pythonSamplePlayTile until I write this
 	
-	//Clean up copy of game state!
-	Py_XDECREF(pyGs);
+	//Clean up references
+	//Note that this likely does NOT include pyGs, since PyTuple_SetItem is a special case that steals a reference, and pyGs will thus be implicitly cleaned up (?)
+	//Py_XDECREF(pyGs);
 	return CHAIN_NONE;
 }
 
@@ -144,8 +148,9 @@ chain_t pythonSampleMergerSurvivor(GameState_t* gs, uint8_t playerNum, uint8_t* 
 	
 	//FIXME: See boilerplate in pythonSamplePlayTile until I write this
 	
-	//Clean up copy of game state!
-	Py_XDECREF(pyGs);
+	//Clean up references
+	//Note that this likely does NOT include pyGs, since PyTuple_SetItem is a special case that steals a reference, and pyGs will thus be implicitly cleaned up (?)
+	//Py_XDECREF(pyGs);
 	return CHAIN_NONE;
 }
 
@@ -156,8 +161,9 @@ void pythonSampleMergerOrder(GameState_t* gs, uint8_t playerNum, chain_t survivo
 	
 	//FIXME: See boilerplate in pythonSamplePlayTile until I write this
 	
-	//Clean up copy of game state!
-	Py_XDECREF(pyGs);
+	//Clean up references
+	//Note that this likely does NOT include pyGs, since PyTuple_SetItem is a special case that steals a reference, and pyGs will thus be implicitly cleaned up (?)
+	//Py_XDECREF(pyGs);
 	return;
 }
 
@@ -168,8 +174,9 @@ void pythonSampleBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy)
 	
 	//FIXME: See boilerplate in pythonSamplePlayTile until I write this
 	
-	//Clean up copy of game state!
-	Py_XDECREF(pyGs);
+	//Clean up references
+	//Note that this likely does NOT include pyGs, since PyTuple_SetItem is a special case that steals a reference, and pyGs will thus be implicitly cleaned up (?)
+	//Py_XDECREF(pyGs);
 	return;
 }
 
@@ -180,8 +187,9 @@ void pythonSampleMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivo
 	
 	//FIXME: See boilerplate in pythonSamplePlayTile until I write this
 	
-	//Clean up copy of game state!
-	Py_XDECREF(pyGs);
+	//Clean up references
+	//Note that this likely does NOT include pyGs, since PyTuple_SetItem is a special case that steals a reference, and pyGs will thus be implicitly cleaned up (?)
+	//Py_XDECREF(pyGs);
 	return;
 }
 
@@ -192,8 +200,9 @@ uint8_t pythonSampleEndGame(GameState_t* gs, uint8_t playerNum)
 	
 	//FIXME: See boilerplate in pythonSamplePlayTile until I write this
 	
-	//Clean up copy of game state!
-	Py_XDECREF(pyGs);
+	//Clean up references
+	//Note that this likely does NOT include pyGs, since PyTuple_SetItem is a special case that steals a reference, and pyGs will thus be implicitly cleaned up (?)
+	//Py_XDECREF(pyGs);
 	return 0;
 }
 

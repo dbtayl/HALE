@@ -27,7 +27,7 @@ PyObject* gsToPy(GameState_t* gs)
 		PyObject* pNumPlayers = PyLong_FromLong(gs->numPlayers);
 		PyObject* pKey = PyBytes_FromString("numPlayers");
 		
-		if( !pNumPlayers || !pKey || !PyDict_SetItem(pGsDict, pKey, pNumPlayers))
+		if( !pNumPlayers || !pKey || PyDict_SetItem(pGsDict, pKey, pNumPlayers))
 		{
 			PRINT_MSG("Failed to add numPlayers");
 			Py_XDECREF(pNumPlayers);
@@ -51,10 +51,11 @@ PyObject* gsToPy(GameState_t* gs)
 		{
 			PyObject* pInt = PyLong_FromLong(gs->board[i]);
 			PyList_SET_ITEM(pBoard, i, pInt);
-			Py_DECREF(pInt);
+			//PyList_SetItem is a special case that steals a reference
+			//Py_DECREF(pInt);
 		}
 		//Add board to the dict
-		if( !pBoard || !pKey || !PyDict_SetItem(pGsDict, pKey, pBoard))
+		if( !pBoard || !pKey || PyDict_SetItem(pGsDict, pKey, pBoard))
 		{
 			PRINT_MSG("Failed to add board");
 			Py_XDECREF(pBoard);
@@ -78,10 +79,11 @@ PyObject* gsToPy(GameState_t* gs)
 		{
 			PyObject* pInt = PyLong_FromLong(gs->remainingStocks[i]);
 			PyList_SET_ITEM(pRemainingStocks, i, pInt);
-			Py_DECREF(pInt);
+			//PyList_SetItem is a special case that steals a reference
+			//Py_DECREF(pInt);
 		}
 		//Add to the dict
-		if( !pRemainingStocks || !pKey || !PyDict_SetItem(pGsDict, pKey, pRemainingStocks))
+		if( !pRemainingStocks || !pKey || PyDict_SetItem(pGsDict, pKey, pRemainingStocks))
 		{
 			PRINT_MSG("Failed to add remainingStocks");
 			Py_XDECREF(pRemainingStocks);
@@ -105,10 +107,11 @@ PyObject* gsToPy(GameState_t* gs)
 		{
 			PyObject* pInt = PyLong_FromLong(gs->tilePool[i]);
 			PyList_SET_ITEM(pTilePool, i, pInt);
-			Py_DECREF(pInt);
+			//PyList_SetItem is a special case that steals a reference
+			//Py_DECREF(pInt);
 		}
 		//Add board to the dict
-		if( !pTilePool || !pKey || !PyDict_SetItem(pGsDict, pKey, pTilePool))
+		if( !pTilePool || !pKey || PyDict_SetItem(pGsDict, pKey, pTilePool))
 		{
 			PRINT_MSG("Failed to add tilePool");
 			Py_XDECREF(pTilePool);
@@ -126,7 +129,7 @@ PyObject* gsToPy(GameState_t* gs)
 		PyObject* pRemainingTiles = PyLong_FromLong(gs->remainingTiles);
 		PyObject* pKey = PyBytes_FromString("remainingTiles");
 		
-		if( !pRemainingTiles || !pKey || !PyDict_SetItem(pGsDict, pKey, pRemainingTiles))
+		if( !pRemainingTiles || !pKey || PyDict_SetItem(pGsDict, pKey, pRemainingTiles))
 		{
 			PRINT_MSG("Failed to add remainingTiles");
 			Py_XDECREF(pRemainingTiles);
@@ -144,7 +147,7 @@ PyObject* gsToPy(GameState_t* gs)
 		PyObject* pCurrentPlayer = PyLong_FromLong(gs->currentPlayer);
 		PyObject* pKey = PyBytes_FromString("currentPlayer");
 		
-		if( !pCurrentPlayer || !pKey || !PyDict_SetItem(pGsDict, pKey, pCurrentPlayer))
+		if( !pCurrentPlayer || !pKey || PyDict_SetItem(pGsDict, pKey, pCurrentPlayer))
 		{
 			PRINT_MSG("Failed to add currentPlayer");
 			Py_XDECREF(pCurrentPlayer);
@@ -199,10 +202,11 @@ PyObject* gsToPy(GameState_t* gs)
 			{
 				PyObject* pStock = PyLong_FromLong(gs->players[i].stocks[j]);
 				PyList_SET_ITEM(pStocks, j, pStock);
-				Py_XDECREF(pStock);
+				//PyList_SetItem is a special case that steals a reference
+				//Py_XDECREF(pStock);
 			}
 			//Clean up references
-			if( !pStocks || !pStocksKey || !PyDict_SetItem(pGsDict, pStocksKey, pStocks))
+			if( !pStocks || !pStocksKey || PyDict_SetItem(pGsDict, pStocksKey, pStocks))
 			{
 				PRINT_MSG("Failed to add stocks to player");
 				Py_XDECREF(pStocks);
@@ -223,10 +227,11 @@ PyObject* gsToPy(GameState_t* gs)
 			{
 				PyObject* pTile = PyLong_FromLong(gs->players[i].tiles[j]);
 				PyList_SET_ITEM(pTiles, j, pTile);
-				Py_XDECREF(pTile);
+				//PyList_SetItem is a special case that steals a reference
+				//Py_XDECREF(pTile);
 			}
 			//Clean up references
-			if( !pTiles || !pTilesKey || !PyDict_SetItem(pGsDict, pTilesKey, pTiles))
+			if( !pTiles || !pTilesKey || PyDict_SetItem(pGsDict, pTilesKey, pTiles))
 			{
 				PRINT_MSG("Failed to add tiles to player");
 				Py_XDECREF(pTiles);
@@ -255,13 +260,14 @@ PyObject* gsToPy(GameState_t* gs)
 			
 			//Add the new player's dict to the list
 			PyList_SET_ITEM(pPlayers, i, pPDict);
-			Py_DECREF(pPDict);
+			//PyList_SetItem is a special case that steals a reference
+			//Py_DECREF(pPDict);
 		}
 		
 		
 		//Add players to the dict
 		//FIXME: Names
-		if( !pPlayers || !pKey || !PyDict_SetItem(pGsDict, pKey, pPlayers))
+		if( !pPlayers || !pKey || PyDict_SetItem(pGsDict, pKey, pPlayers))
 		{
 			PRINT_MSG("Failed to add player to dict");
 			Py_XDECREF(pPlayers);
