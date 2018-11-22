@@ -115,13 +115,14 @@ uint8_t pythonSamplePlayTile(GameState_t* gs, uint8_t playerNum)
 			tile = PyLong_AsLong(pRetVal);
 		}
 		
-		//Either way, decrement reference
-		Py_XDECREF(pRetVal);
+		//Do NOT decref here- done later
 	}
 	
 	//Clean up references
 	//pPlayerNum and pyGs are cleaned up when pArgs is cleaned up (?)
 	Py_XDECREF(pArgs);
+	
+	//XDECREF handles NULL pointers for us- no need to check for NULL
 	Py_XDECREF(pRetVal);
 	
 	//May or may not be valid... too bad if it's not!
