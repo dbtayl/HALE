@@ -38,5 +38,9 @@
 #binary
 HALE
 
+#python
+__pycache__
+*.pyc
+
 #backup files
 *~

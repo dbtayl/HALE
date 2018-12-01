@@ -10,13 +10,14 @@
 #include "state.h"
 #include "util.h"
 
-PlayerActions_t greedyActions = {	.playTile = greedyPlayTile,
+const PlayerActions_t greedyActions = {	.playTile = greedyPlayTile,
 					.formChain = greedyFormChain,
 					.mergerSurvivor = greedyMergerSurvivor,
 					.mergerOrder = greedyMergerOrder,
 					.buyStock = greedyBuyStock,
 					.mergerTrade = greedyMergerTrade,
-					.endGame = greedyEndGame
+					.endGame = greedyEndGame,
+					.typeName = "aigreedy"
 				};
 
 

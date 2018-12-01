@@ -6,13 +6,14 @@
 #include "state.h"
 #include "util.h"
 
-PlayerActions_t randomActions = {	.playTile = randomPlayTile,
+const PlayerActions_t randomActions = {	.playTile = randomPlayTile,
 					.formChain = randomFormChain,
 					.mergerSurvivor = randomMergerSurvivor,
 					.mergerOrder = randomMergerOrder,
 					.buyStock = randomBuyStock,
 					.mergerTrade = randomMergerTrade,
-					.endGame = randomEndGame
+					.endGame = randomEndGame,
+					.typeName = "airandom"
 				};
 
 

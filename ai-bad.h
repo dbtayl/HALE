@@ -18,7 +18,7 @@
 
 //See player.h for an explanation of these functions
 
-extern PlayerActions_t badActions;
+extern const PlayerActions_t badActions;
 
 
 

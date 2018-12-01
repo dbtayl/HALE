@@ -16,7 +16,7 @@
 
 //See player.h for an explanation of these functions
 
-extern PlayerActions_t humanActions;
+extern const PlayerActions_t humanActions;
 
 
 

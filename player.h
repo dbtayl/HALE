@@ -14,7 +14,7 @@
 	//void (*buyStock)(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy);
 	//void (*mergerTrade)(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t defunct, uint8_t* tradeFor, uint8_t* sell);
 	//uint8_t (*endGame)(GameState_t* gs, uint8_t playerNum);
-	//char* name;
+	//char* typeName;
 //} PlayerActions_t;
 
 

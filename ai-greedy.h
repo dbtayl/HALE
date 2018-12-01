@@ -15,7 +15,7 @@
 
 //See player.h for an explanation of these functions
 
-extern PlayerActions_t greedyActions;
+extern const PlayerActions_t greedyActions;
 
 
 

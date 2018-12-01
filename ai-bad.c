@@ -6,13 +6,14 @@
 #include "state.h"
 #include "util.h"
 
-PlayerActions_t badActions = {	.playTile = badPlayTile,
+const PlayerActions_t badActions = {	.playTile = badPlayTile,
 					.formChain = badFormChain,
 					.mergerSurvivor = badMergerSurvivor,
 					.mergerOrder = badMergerOrder,
 					.buyStock = badBuyStock,
 					.mergerTrade = badMergerTrade,
-					.endGame = badEndGame
+					.endGame = badEndGame,
+					.typeName = "aibad"
 				};
 
 

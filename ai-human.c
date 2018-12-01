@@ -7,13 +7,14 @@
 #include "util.h"
 
 
-PlayerActions_t humanActions = {	.playTile = humanPlayTile,
+const PlayerActions_t humanActions = {	.playTile = humanPlayTile,
 					.formChain = humanFormChain,
 					.mergerSurvivor = humanMergerSurvivor,
 					.mergerOrder = humanMergerOrder,
 					.buyStock = humanBuyStock,
 					.mergerTrade = humanMergerTrade,
-					.endGame = humanEndGame
+					.endGame = humanEndGame,
+					.typeName = "human"
 				};
 
 

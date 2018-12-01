@@ -28,7 +28,7 @@
 
 //See player.h for an explanation of these functions
 
-extern PlayerActions_t pythonSampleActions;
+extern const PlayerActions_t pythonSampleActions;
 
 
 

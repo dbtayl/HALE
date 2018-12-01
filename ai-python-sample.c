@@ -60,13 +60,14 @@ static uint8_t initPython()
 	return 0;
 }
 
-PlayerActions_t pythonSampleActions = {	.playTile = pythonSamplePlayTile,
+const PlayerActions_t pythonSampleActions = {	.playTile = pythonSamplePlayTile,
 					.formChain = pythonSampleFormChain,
 					.mergerSurvivor = pythonSampleMergerSurvivor,
 					.mergerOrder = pythonSampleMergerOrder,
 					.buyStock = pythonSampleBuyStock,
 					.mergerTrade = pythonSampleMergerTrade,
-					.endGame = pythonSampleEndGame
+					.endGame = pythonSampleEndGame,
+					.typeName = "aipythonsample"
 				};
 
 

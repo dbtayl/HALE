@@ -6,6 +6,7 @@
 #include "state.h"
 #include "util.h"
 #include "player.h"
+#include "player-types.h"
 
 #ifdef TURN_DELAY
 #include <unistd.h>
@@ -68,7 +69,7 @@ static void initializeGameState(GameState_t* gs)
 	gs->currentPlayer = 0;
 }
 
-static HALE_status_t configurePlayers(GameState_t* gs, uint8_t numPlayers)
+static HALE_status_t configurePlayers(GameState_t* gs, uint8_t numPlayers, uint8_t* playerTypes)
 {
 	CHECK_NULL_PTR_FATAL(gs, "gs");
 	
@@ -83,36 +84,23 @@ static HALE_status_t configurePlayers(GameState_t* gs, uint8_t numPlayers)
 	//Need to record the number of players in the game into the actual state
 	gs->numPlayers = numPlayers;
 	
-	//FIXME: Shim to allow us to continue...
-	PRINT_MSG("FIXME: Need real implementation; setting all random players as a shim");
-	
-	if(numPlayers < 4)
-	{
-		PRINT_MSG_INT("Number of players must be at least 4 for this shim to work. Players", numPlayers);
-		return HALE_BAD_INPUT;
-	}
-	
-	for(int i = 0; i < numPlayers - 2; i++)
-	{
-		gs->players[i].actions = randomActions;
-		gs->players[i].name = "RANDOM";
-	}
-	gs->players[numPlayers-2].actions = pythonSampleActions;
-	gs->players[numPlayers-2].name = "PYTHON";
-	
-	gs->players[numPlayers-1].actions = greedyActions;
-	gs->players[numPlayers-1].name = "GREEDY";
-	
 	for(int i = 0; i < numPlayers; i++)
 	{
-		//Check that all player actions are non-NULL
+		gs->players[i].actions = *PlayerTypes[playerTypes[i]];
+		gs->players[i].name = gs->players[i].actions.typeName;
+	}
+	
+	//Check that all player actions are non-NULL
+	for(int i = 0; i < numPlayers; i++)
+	{
 		if( (! gs->players[i].actions.playTile) ||
 			(! gs->players[i].actions.formChain) ||
 			(! gs->players[i].actions.mergerSurvivor) ||
 			(! gs->players[i].actions.mergerOrder) ||
 			(! gs->players[i].actions.buyStock) ||
 			(! gs->players[i].actions.mergerTrade) ||
-			(! gs->players[i].actions.endGame) )
+			(! gs->players[i].actions.endGame) ||
+			(! gs->players[i].actions.typeName) )
 		{
 			PRINT_MSG_INT("Input player has one or more NULL functions! Player", i);
 			return HALE_BAD_INPUT;
@@ -891,7 +879,7 @@ static HALE_status_t handleEndGameQueryPhase(GameState_t* gs, uint8_t* endGame)
 }
 
 
-void runGame(uint8_t numPlayers)
+void runGame(uint8_t numPlayers, uint8_t* playerTypes)
 {
 	//int i;
 	HALE_status_t err_code = HALE_OK;
@@ -905,7 +893,7 @@ void runGame(uint8_t numPlayers)
 	initializeGameState(&gs);
 	
 	//Configure players (populate actions)
-	err_code = configurePlayers(&gs, numPlayers);
+	err_code = configurePlayers(&gs, numPlayers, playerTypes);
 	VERIFY_HALE_STATUS_FATAL(err_code, "Failed to configure players");
 	
 	//Deal initial tiles

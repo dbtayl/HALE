@@ -18,6 +18,7 @@ typedef struct
 	void (*buyStock)(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy);
 	void (*mergerTrade)(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t defunct, uint8_t* tradeFor, uint8_t* sell);
 	uint8_t (*endGame)(GameState_t* gs, uint8_t playerNum);
+	char* typeName;
 } PlayerActions_t;
 
 typedef struct
@@ -47,6 +48,7 @@ HALE_status_t makeSanitizedGameStateCopy(GameState_t* newgs, GameState_t* gs, ui
 
 
 //This function contains the entire game flow logic- setup, operation, and completion
-void runGame(uint8_t numPlayers);
+//playerTypes is an array of the INDICES of player TYPES to include in the game- see player-types.[ch]
+void runGame(uint8_t numPlayers, uint8_t* playerTypes);
 
 #endif
