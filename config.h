@@ -44,6 +44,10 @@ typedef enum	{	HALE_OK = 0,
 
 extern const char* err_msg[];
 
+//Whether or not to output extra messages. Set by command line flag
+//Actually defined in main.c
+extern uint8_t verbose;
+
 
 //How much money each player starts with
 #define STARTING_CASH (6000)

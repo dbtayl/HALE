@@ -6,5 +6,6 @@ const PlayerActions_t* PlayerTypes[NUM_PLAYER_TYPES] =
 	&greedyActions,
 	&humanActions,
 	&pythonSampleActions,
-	&randomActions
+	&randomActions,
+	&danActions
 };

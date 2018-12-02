@@ -15,6 +15,8 @@
 #include <Python.h>
 #endif //HALE_ENABLE_PYTHON
 
+uint8_t verbose = 0;
+
 static void printHelp(char* name)
 {
 	printf("Usage: %s [OPTIONS]\r\n", name);
@@ -77,7 +79,7 @@ int main(int argc, char* argv[])
 				//Verbose output
 				case 'v':
 				{
-					printf("VERBOSE!\r\n");
+					verbose = 1;
 					break;
 				}
 				
