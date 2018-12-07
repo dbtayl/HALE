@@ -9,5 +9,6 @@ const PlayerActions_t* PlayerTypes[NUM_PLAYER_TYPES] =
 	&randomActions,
 	&danActions,
 	&pythonAndyActions,
-	&pythonJimActions
+	&pythonJimActions,
+	&pythonCharlieActions
 };
