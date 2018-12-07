@@ -1,7 +1,7 @@
 #ifndef HALE_PLAYER_TYPES_H
 #define HALE_PLAYER_TYPES_H
 
-#define NUM_PLAYER_TYPES (9)
+#define NUM_PLAYER_TYPES (10)
 
 //Because dealing with dynamic libraries seems like a huge pain, just
 //manually include all player/AI types here
@@ -14,6 +14,7 @@
 #include "ai-python-andy.h"
 #include "ai-python-jim.h"
 #include "ai-python-charlie.h"
+#include "ai-python-james.h"
 
 extern const PlayerActions_t* PlayerTypes[];
 
