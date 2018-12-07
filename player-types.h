@@ -15,6 +15,7 @@
 #include "ai-python-jim.h"
 #include "ai-python-charlie.h"
 #include "ai-python-james.h"
+#include "ai-python-mike.h"
 
 extern const PlayerActions_t* PlayerTypes[];
 
