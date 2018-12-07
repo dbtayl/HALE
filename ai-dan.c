@@ -2,6 +2,7 @@
 #include "ai-dan.h"
 #include "config.h"
 #include "util.h"
+#include "board.h"
 
 const PlayerActions_t danActions = {	.playTile = danPlayTile,
 					.formChain = danFormChain,
@@ -51,7 +52,7 @@ uint8_t danPlayTile(GameState_t* gs, uint8_t playerNum)
 	
 	
 	uint8_t bestTile = TILE_NULL;
-	int bestValue = 0;
+	int bestValue = -100;
 	
 	for(int i = 0; i < HAND_SIZE; i++)
 	{
@@ -161,6 +162,8 @@ uint8_t danPlayTile(GameState_t* gs, uint8_t playerNum)
 			//Remember that more than two chains may be merging!
 			//FIXME: Probably want to weight things based on available cash, size of surviving chain, etc.
 			
+			
+			
 		}
 		else if(wouldFormChain)
 		{
@@ -241,11 +244,9 @@ uint8_t danPlayTile(GameState_t* gs, uint8_t playerNum)
 
 chain_t danFormChain(GameState_t* gs, uint8_t playerNum)
 {
-	//Since we'll NEVER keep worthless stock, just pick the most expensive
-	//chain we can form
-	//FIXME: Look to see if anybody else has stock in the chain before
-	//forming it? (ie, take bonus into account)?
-	//FIXME: Incomplete
+	//Avoid forming chains others have stock in (unless we have more)
+	//Otherwise, just try to form expensive chains?
+	//Implementing this is meaningless until we adjust merger trading functionality
 	PRINT_MSG("FIXME: Incomplete");
 	return CHAIN_NONE;
 }
