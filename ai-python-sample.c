@@ -132,80 +132,383 @@ uint8_t pythonSamplePlayTile(GameState_t* gs, uint8_t playerNum)
 
 chain_t pythonSampleFormChain(GameState_t* gs, uint8_t playerNum)
 {
-	//FIXME: Implement
+	//The chain we want to return. Theoretically this will be properly
+	//populated by the Python function we call
+	chain_t chain = 0;
+	
+	//If we haven't initialized our local state... do so
+	//NOTE: This will hopefully be unnecessary in the future, when an
+	//init function is included in the list of player functions
+	if(!pModule || !pyFuncFormChain)
+	{
+		//FIXME: Error checking
+		initPython();
+	}
+	
+	//Make a copy of game state
 	PyObject* pyGs = gsToPy(gs);
 	
-	//FIXME: See boilerplate in pythonSamplePlayTile until I write this
+	//List of arguments
+	PyObject* pArgs = PyTuple_New(2);
+	//pyGs is the first argument- no need to build that
+	//playerNum is the second argument- need to build that
+	PyObject* pPlayerNum = PyLong_FromLong(playerNum);
+	
+	//Assign arguments
+	PyTuple_SetItem(pArgs, 0, pyGs);
+	PyTuple_SetItem(pArgs, 1, pPlayerNum);
+	
+	//Do NOT decrement references- PyTuple_SetItem is a special case that STEALS a reference instead of incrementing
+	//Decrement references
+	//Py_XDECREF(pPlayerNum);
+	//Py_XDECREF(pyGs);
+	
+	//Call python code
+	PyObject* pRetVal = PyObject_CallObject(pyFuncFormChain, pArgs);
+	
+	//Parse out returned value
+	if (pRetVal != NULL)
+	{
+		//If the returned value is, in fact, an integer
+		if(PyLong_Check(pRetVal))
+		{
+			chain = PyLong_AsLong(pRetVal);
+		}
+		
+		//Do NOT decref here- done later
+	}
 	
 	//Clean up references
-	//Note that this likely does NOT include pyGs, since PyTuple_SetItem is a special case that steals a reference, and pyGs will thus be implicitly cleaned up (?)
-	//Py_XDECREF(pyGs);
-	return CHAIN_NONE;
+	//pPlayerNum and pyGs are cleaned up when pArgs is cleaned up (?)
+	Py_XDECREF(pArgs);
+	
+	//XDECREF handles NULL pointers for us- no need to check for NULL
+	Py_XDECREF(pRetVal);
+	
+	//May or may not be valid... too bad if it's not!
+	return chain;
 }
 
 chain_t pythonSampleMergerSurvivor(GameState_t* gs, uint8_t playerNum, uint8_t* options)
 {
-	//FIXME: Implement
+	//The chain we want to return. Theoretically this will be properly
+	//populated by the Python function we call
+	chain_t chain = 0;
+	
+	//If we haven't initialized our local state... do so
+	//NOTE: This will hopefully be unnecessary in the future, when an
+	//init function is included in the list of player functions
+	if(!pModule || !pyFuncFormChain)
+	{
+		//FIXME: Error checking
+		initPython();
+	}
+	
+	//Make a copy of game state
 	PyObject* pyGs = gsToPy(gs);
 	
-	//FIXME: See boilerplate in pythonSamplePlayTile until I write this
+	//List of arguments
+	PyObject* pArgs = PyTuple_New(3);
+	//pyGs is the first argument- no need to build that
+	//playerNum is the second argument- need to build that
+	PyObject* pPlayerNum = PyLong_FromLong(playerNum);
+	PyObject* pOptions = PyList_New(NUM_CHAINS);
+	
+	for(int i = 0; i < NUM_CHAINS; i++)
+	{
+		PyObject* pInt = PyLong_FromLong(options[i]);
+		PyList_SET_ITEM(pOptions, i, pInt);
+		//NOTE: PyList_SetItem steals a reference- no need to decrement!
+	}
+	
+	//Assign arguments
+	PyTuple_SetItem(pArgs, 0, pyGs);
+	PyTuple_SetItem(pArgs, 1, pPlayerNum);
+	PyTuple_SetItem(pArgs, 2, pOptions);
+	
+	//Do NOT decrement references- PyTuple_SetItem is a special case that STEALS a reference instead of incrementing
+	//Decrement references
+	//Py_XDECREF(pPlayerNum);
+	//Py_XDECREF(pyGs);
+	
+	//Call python code
+	PyObject* pRetVal = PyObject_CallObject(pyFuncFormChain, pArgs);
+	
+	//Parse out returned value
+	if (pRetVal != NULL)
+	{
+		//If the returned value is, in fact, an integer
+		if(PyLong_Check(pRetVal))
+		{
+			chain = PyLong_AsLong(pRetVal);
+		}
+		
+		//Do NOT decref here- done later
+	}
 	
 	//Clean up references
-	//Note that this likely does NOT include pyGs, since PyTuple_SetItem is a special case that steals a reference, and pyGs will thus be implicitly cleaned up (?)
-	//Py_XDECREF(pyGs);
-	return CHAIN_NONE;
+	//pPlayerNum and pyGs are cleaned up when pArgs is cleaned up (?)
+	Py_XDECREF(pArgs);
+	
+	//XDECREF handles NULL pointers for us- no need to check for NULL
+	Py_XDECREF(pRetVal);
+	
+	//May or may not be valid... too bad if it's not!
+	return chain;
 }
 
 void pythonSampleMergerOrder(GameState_t* gs, uint8_t playerNum, chain_t survivor, uint8_t* options)
 {
-	//FIXME: Implement
+	//If we haven't initialized our local state... do so
+	//NOTE: This will hopefully be unnecessary in the future, when an
+	//init function is included in the list of player functions
+	if(!pModule || !pyFuncFormChain)
+	{
+		//FIXME: Error checking
+		initPython();
+	}
+	
+	//Make a copy of game state
 	PyObject* pyGs = gsToPy(gs);
 	
-	//FIXME: See boilerplate in pythonSamplePlayTile until I write this
+	//List of arguments
+	PyObject* pArgs = PyTuple_New(3);
+	//pyGs is the first argument- no need to build that
+	//playerNum is the second argument- need to build that
+	PyObject* pPlayerNum = PyLong_FromLong(playerNum);
+	PyObject* pSurvivor = PyLong_FromLong(survivor);
+	
+	//Assign arguments
+	PyTuple_SetItem(pArgs, 0, pyGs);
+	PyTuple_SetItem(pArgs, 1, pPlayerNum);
+	PyTuple_SetItem(pArgs, 2, pSurvivor);
+	
+	//Do NOT decrement references- PyTuple_SetItem is a special case that STEALS a reference instead of incrementing
+	//Decrement references
+	//Py_XDECREF(pPlayerNum);
+	//Py_XDECREF(pyGs);
+	
+	//Call python code
+	PyObject* pRetVal = PyObject_CallObject(pyFuncFormChain, pArgs);
+	
+	//Parse out returned value
+	//If the returned value is, in fact, a list
+	if (pRetVal != NULL && PyList_Check(pRetVal))
+	{
+		//...and it's the right length
+		if(PyList_Size(pRetVal) == NUM_CHAINS)
+		{
+			//...and it's a list of integers
+			if(PyLong_Check(PyList_GetItem(pRetVal, 0)))
+			{
+				//Extract all of the values
+				for(int i = 0; i < NUM_CHAINS; i++)
+				{
+					options[i] = (uint8_t)PyLong_AsLong(PyList_GetItem(pRetVal, i));
+				}
+			}
+		}
+		
+		//Do NOT decref here- done later
+	}
 	
 	//Clean up references
-	//Note that this likely does NOT include pyGs, since PyTuple_SetItem is a special case that steals a reference, and pyGs will thus be implicitly cleaned up (?)
-	//Py_XDECREF(pyGs);
-	return;
+	//pPlayerNum and pyGs are cleaned up when pArgs is cleaned up (?)
+	Py_XDECREF(pArgs);
+	
+	//XDECREF handles NULL pointers for us- no need to check for NULL
+	Py_XDECREF(pRetVal);
+	
+	//Return nothing- options should have been properly populated
 }
 
 void pythonSampleBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy)
 {
-	//FIXME: Implement
+	//If we haven't initialized our local state... do so
+	//NOTE: This will hopefully be unnecessary in the future, when an
+	//init function is included in the list of player functions
+	if(!pModule || !pyFuncFormChain)
+	{
+		//FIXME: Error checking
+		initPython();
+	}
+	
+	//Make a copy of game state
 	PyObject* pyGs = gsToPy(gs);
 	
-	//FIXME: See boilerplate in pythonSamplePlayTile until I write this
+	//List of arguments
+	PyObject* pArgs = PyTuple_New(2);
+	//pyGs is the first argument- no need to build that
+	//playerNum is the second argument- need to build that
+	PyObject* pPlayerNum = PyLong_FromLong(playerNum);
+	
+	//Assign arguments
+	PyTuple_SetItem(pArgs, 0, pyGs);
+	PyTuple_SetItem(pArgs, 1, pPlayerNum);
+	
+	//Do NOT decrement references- PyTuple_SetItem is a special case that STEALS a reference instead of incrementing
+	//Decrement references
+	//Py_XDECREF(pPlayerNum);
+	//Py_XDECREF(pyGs);
+	
+	//Call python code
+	PyObject* pRetVal = PyObject_CallObject(pyFuncFormChain, pArgs);
+	
+	//Parse out returned value
+	//If the returned value is, in fact, a list
+	if (pRetVal != NULL && PyList_Check(pRetVal))
+	{
+		//...and it's the right length
+		if(PyList_Size(pRetVal) == NUM_CHAINS)
+		{
+			//...and it's a list of integers
+			if(PyLong_Check(PyList_GetItem(pRetVal, 0)))
+			{
+				//Extract all of the values
+				for(int i = 0; i < NUM_CHAINS; i++)
+				{
+					toBuy[i] = (uint8_t)PyLong_AsLong(PyList_GetItem(pRetVal, i));
+				}
+			}
+		}
+		
+		//Do NOT decref here- done later
+	}
 	
 	//Clean up references
-	//Note that this likely does NOT include pyGs, since PyTuple_SetItem is a special case that steals a reference, and pyGs will thus be implicitly cleaned up (?)
-	//Py_XDECREF(pyGs);
-	return;
+	//pPlayerNum and pyGs are cleaned up when pArgs is cleaned up (?)
+	Py_XDECREF(pArgs);
+	
+	//XDECREF handles NULL pointers for us- no need to check for NULL
+	Py_XDECREF(pRetVal);
+	
+	//Return nothing- toBuy should have been properly populated
 }
 
 void pythonSampleMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, chain_t defunct, uint8_t* tradeFor, uint8_t* sell)
 {
-	//FIXME: Implement
+	//If we haven't initialized our local state... do so
+	//NOTE: This will hopefully be unnecessary in the future, when an
+	//init function is included in the list of player functions
+	if(!pModule || !pyFuncFormChain)
+	{
+		//FIXME: Error checking
+		initPython();
+	}
+	
+	//Make a copy of game state
 	PyObject* pyGs = gsToPy(gs);
 	
-	//FIXME: See boilerplate in pythonSamplePlayTile until I write this
+	//List of arguments
+	PyObject* pArgs = PyTuple_New(4);
+	//pyGs is the first argument- no need to build that
+	//playerNum is the second argument- need to build that
+	PyObject* pPlayerNum = PyLong_FromLong(playerNum);
+	PyObject* pSurvivor = PyLong_FromLong(survivor);
+	PyObject* pDefunct = PyLong_FromLong(defunct);
+	
+	//Assign arguments
+	PyTuple_SetItem(pArgs, 0, pyGs);
+	PyTuple_SetItem(pArgs, 1, pPlayerNum);
+	PyTuple_SetItem(pArgs, 2, pSurvivor);
+	PyTuple_SetItem(pArgs, 3, pDefunct);
+	
+	//Do NOT decrement references- PyTuple_SetItem is a special case that STEALS a reference instead of incrementing
+	//Decrement references
+	//Py_XDECREF(pPlayerNum);
+	//Py_XDECREF(pyGs);
+	
+	//Call python code
+	PyObject* pRetVal = PyObject_CallObject(pyFuncFormChain, pArgs);
+	
+	//Parse out returned value
+	//If the returned value is, in fact, a tuple
+	if (pRetVal != NULL && PyTuple_Check(pRetVal))
+	{
+		//...and it's the right length
+		if(PyTuple_Size(pRetVal) == 2)
+		{
+			//...and it's a tuple of integers
+			//BORROWED references!
+			PyObject* pTradeFor = PyTuple_GetItem(pRetVal, 0);
+			PyObject* pSell = PyTuple_GetItem(pRetVal, 1);
+			if(PyLong_Check(pTradeFor) && PyLong_Check(pSell))
+			{
+				*tradeFor = (uint8_t)PyLong_AsLong(pTradeFor);
+				*sell = (uint8_t)PyLong_AsLong(pSell);
+			}
+		}
+		
+		//Do NOT decref here- done later
+	}
 	
 	//Clean up references
-	//Note that this likely does NOT include pyGs, since PyTuple_SetItem is a special case that steals a reference, and pyGs will thus be implicitly cleaned up (?)
-	//Py_XDECREF(pyGs);
-	return;
+	//pPlayerNum and pyGs are cleaned up when pArgs is cleaned up (?)
+	Py_XDECREF(pArgs);
+	
+	//XDECREF handles NULL pointers for us- no need to check for NULL
+	Py_XDECREF(pRetVal);
+	
+	//Return nothing- tradeFor and sell should have been properly populated
 }
 
 uint8_t pythonSampleEndGame(GameState_t* gs, uint8_t playerNum)
 {
-	//FIXME: Implement
+	//Whether we wan ot end the game. Theoretically this will be properly
+	//populated by the Python function we call
+	uint8_t endGame = 0;
+	
+	//If we haven't initialized our local state... do so
+	//NOTE: This will hopefully be unnecessary in the future, when an
+	//init function is included in the list of player functions
+	if(!pModule || !pyFuncEndGame)
+	{
+		//FIXME: Error checking
+		initPython();
+	}
+	
+	//Make a copy of game state
 	PyObject* pyGs = gsToPy(gs);
 	
-	//FIXME: See boilerplate in pythonSamplePlayTile until I write this
+	//List of arguments
+	PyObject* pArgs = PyTuple_New(2);
+	//pyGs is the first argument- no need to build that
+	//playerNum is the second argument- need to build that
+	PyObject* pPlayerNum = PyLong_FromLong(playerNum);
+	
+	//Assign arguments
+	PyTuple_SetItem(pArgs, 0, pyGs);
+	PyTuple_SetItem(pArgs, 1, pPlayerNum);
+	
+	//Do NOT decrement references- PyTuple_SetItem is a special case that STEALS a reference instead of incrementing
+	//Decrement references
+	//Py_XDECREF(pPlayerNum);
+	//Py_XDECREF(pyGs);
+	
+	//Call python code
+	PyObject* pRetVal = PyObject_CallObject(pyFuncEndGame, pArgs);
+	
+	//Parse out returned value
+	if (pRetVal != NULL)
+	{
+		//If the returned value is, in fact, an integer
+		if(PyLong_Check(pRetVal))
+		{
+			endGame = PyLong_AsLong(pRetVal);
+		}
+		
+		//Do NOT decref here- done later
+	}
 	
 	//Clean up references
-	//Note that this likely does NOT include pyGs, since PyTuple_SetItem is a special case that steals a reference, and pyGs will thus be implicitly cleaned up (?)
-	//Py_XDECREF(pyGs);
-	return 0;
+	//pPlayerNum and pyGs are cleaned up when pArgs is cleaned up (?)
+	Py_XDECREF(pArgs);
+	
+	//XDECREF handles NULL pointers for us- no need to check for NULL
+	Py_XDECREF(pRetVal);
+	
+	//May or may not be valid... too bad if it's not!
+	return endGame;
 }
 
 #endif //HALE_ENABLE_PYTHON
