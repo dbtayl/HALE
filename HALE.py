@@ -183,7 +183,17 @@ def getAdjacentSquares(gs, tile):
 		return None
 	
 	#Turns out this is a really simple function in Python...
-	return squareAdjacencies[tile]
+	
+	adj = squareAdjacencies[tile]
+	out = [0 for i in range(4)]
+	
+	for i in range(4):
+		if(adj[a] == BOARD_NULL):
+			out[i] = TILE_NULL
+		else:
+			out[i] = gs["board"][adj[i]]
+	
+	return out
 
 
 #Python re-implementation of the C function by the same name
