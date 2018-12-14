@@ -10,4 +10,4 @@
 -Add a function that just verifies the current board state is valid (no touching chains, no non-chain tiles touching chains)
 	Touching non-chain tiles are OK, so long as they're <= # of players- could be result of initial game setup
 -Update player function requirements to add an "init" function, to do any one-time initialization
--Add a HALE python module to expose things like constants
+-Improve HALE python module to actually load values from C
