@@ -296,6 +296,12 @@ HALE_status_t getAdjacentSquares(GameState_t* gs, uint8_t tile, chain_t* adjacen
 	CHECK_NULL_PTR(gs, "gs");
 	CHECK_NULL_PTR(adjacentSquares, "adjacentSquares");
 	
+	if(tile >= BOARD_TILES)
+	{
+		PRINT_MSG_INT("Invalid tile", tile);
+		return HALE_BAD_INPUT;
+	}
+	
 	//Resolve to state of each square and count up how many uniqe tile types
 	for(int i = 0; i < 4; i++)
 	{
