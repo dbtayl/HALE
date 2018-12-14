@@ -198,7 +198,7 @@ chain_t pythonJimMergerSurvivor(GameState_t* gs, uint8_t playerNum, uint8_t* opt
 	//If we haven't initialized our local state... do so
 	//NOTE: This will hopefully be unnecessary in the future, when an
 	//init function is included in the list of player functions
-	if(!pModule || !pyFuncFormChain)
+	if(!pModule || !pyFuncMergerSurvivor)
 	{
 		//FIXME: Error checking
 		initPython();
@@ -232,7 +232,7 @@ chain_t pythonJimMergerSurvivor(GameState_t* gs, uint8_t playerNum, uint8_t* opt
 	//Py_XDECREF(pyGs);
 	
 	//Call python code
-	PyObject* pRetVal = PyObject_CallObject(pyFuncFormChain, pArgs);
+	PyObject* pRetVal = PyObject_CallObject(pyFuncMergerSurvivor, pArgs);
 	
 	//Parse out returned value
 	if (pRetVal != NULL)
@@ -262,7 +262,7 @@ void pythonJimMergerOrder(GameState_t* gs, uint8_t playerNum, chain_t survivor, 
 	//If we haven't initialized our local state... do so
 	//NOTE: This will hopefully be unnecessary in the future, when an
 	//init function is included in the list of player functions
-	if(!pModule || !pyFuncFormChain)
+	if(!pModule || !pyFuncMergerOrder)
 	{
 		//FIXME: Error checking
 		initPython();
@@ -289,7 +289,7 @@ void pythonJimMergerOrder(GameState_t* gs, uint8_t playerNum, chain_t survivor, 
 	//Py_XDECREF(pyGs);
 	
 	//Call python code
-	PyObject* pRetVal = PyObject_CallObject(pyFuncFormChain, pArgs);
+	PyObject* pRetVal = PyObject_CallObject(pyFuncMergerOrder, pArgs);
 	
 	//Parse out returned value
 	//If the returned value is, in fact, a list
@@ -327,7 +327,7 @@ void pythonJimBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy)
 	//If we haven't initialized our local state... do so
 	//NOTE: This will hopefully be unnecessary in the future, when an
 	//init function is included in the list of player functions
-	if(!pModule || !pyFuncFormChain)
+	if(!pModule || !pyFuncBuyStock)
 	{
 		//FIXME: Error checking
 		initPython();
@@ -352,7 +352,7 @@ void pythonJimBuyStock(GameState_t* gs, uint8_t playerNum, uint8_t* toBuy)
 	//Py_XDECREF(pyGs);
 	
 	//Call python code
-	PyObject* pRetVal = PyObject_CallObject(pyFuncFormChain, pArgs);
+	PyObject* pRetVal = PyObject_CallObject(pyFuncBuyStock, pArgs);
 	
 	//Parse out returned value
 	//If the returned value is, in fact, a list
@@ -390,7 +390,7 @@ void pythonJimMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, 
 	//If we haven't initialized our local state... do so
 	//NOTE: This will hopefully be unnecessary in the future, when an
 	//init function is included in the list of player functions
-	if(!pModule || !pyFuncFormChain)
+	if(!pModule || !pyFuncMergerTrade)
 	{
 		//FIXME: Error checking
 		initPython();
@@ -419,7 +419,7 @@ void pythonJimMergerTrade(GameState_t* gs, uint8_t playerNum, chain_t survivor, 
 	//Py_XDECREF(pyGs);
 	
 	//Call python code
-	PyObject* pRetVal = PyObject_CallObject(pyFuncFormChain, pArgs);
+	PyObject* pRetVal = PyObject_CallObject(pyFuncMergerTrade, pArgs);
 	
 	//Parse out returned value
 	//If the returned value is, in fact, a tuple
