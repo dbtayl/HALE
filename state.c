@@ -881,7 +881,6 @@ static HALE_status_t handleEndGameQueryPhase(GameState_t* gs, uint8_t* endGame)
 
 void runGame(uint8_t numPlayers, uint8_t* playerTypes)
 {
-	//int i;
 	HALE_status_t err_code = HALE_OK;
 	
 	//Keep the game state internal to the function; don't want to let
@@ -909,6 +908,10 @@ void runGame(uint8_t numPlayers, uint8_t* playerTypes)
 	
 	//So now everybody has tiles, the board is set up... time to start!
 	uint8_t gameOver = 0;
+	
+	//Don't let games run forever
+	int turnCounter = 0;
+	
 	while(!gameOver)
 	{
 		printf("\n\n");
@@ -979,6 +982,13 @@ void runGame(uint8_t numPlayers, uint8_t* playerTypes)
 			err_code = handleEndGameQueryPhase(&gs, &gameOver);
 			VERIFY_HALE_STATUS_FATAL(err_code, "handleEndGameQueryPhase failed");
 			
+			//Check if we should force the end of the game due to turn limit
+			if(turnCounter >= MAX_TURNS)
+			{
+				PRINT_MSG("Turn limit lit- forcing game over!");
+				gameOver = 1;
+			}
+			
 			//No need to deal tiles or set next player if we're ending the game
 			if(gameOver)
 			{
@@ -1003,7 +1013,9 @@ void runGame(uint8_t numPlayers, uint8_t* playerTypes)
 		{
 			printPlayer(&gs, i);
 		}
-		//return;
+		
+		//Count turns
+		turnCounter++;
 		
 #ifdef TURN_DELAY
 		usleep(TURN_DELAY*1000);

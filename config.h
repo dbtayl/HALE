@@ -81,5 +81,18 @@ extern uint8_t verbose;
 #define SHARES_PER_TURN (3)
 
 
+//Maximum number of turns the game is allowed to run for
+//Theoretical max for a 4-player game is something like 344 (108 tiles,
+//plus another NUM_CHAINS * NUM_STOCKS / SHARES_PER_TURN * numPlayers, if
+//the players were REALLY dumb and never bought stock.
+//We'll call it BOARD_TILES + 20, which seems reasonable. If you can't do
+//what you want in 5 extra turns after the whole board is filled... well,
+//too bad. Something is probably already really screwed up.
+//Math is probably off slightly, and possibly the first n players can
+//(possibly) get "extra" turns, though that should never matter for any
+//sort of intelligent player.
+#define MAX_TURNS (128)
+
+
 
 #endif
